@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Car Details – AP Car Rentals</title>
+  <meta name="description" content="View detailed specifications and book your selected car in Andhra Pradesh."/>
+  <link rel="stylesheet" href="css/style.css"/>
+  <style>
+    .car-detail-hero {
+      padding: 100px 20px 60px;
+      background: radial-gradient(ellipse 70% 60% at 60% 30%, rgba(255,107,0,0.1) 0%, transparent 65%), var(--bg-dark);
+    }
+    .car-detail-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 40px;
+      max-width: 1100px;
+      margin: 0 auto;
+      align-items: start;
+    }
+    .car-gallery { position: relative; }
+    .main-img {
+      width: 100%; height: 380px; object-fit: cover;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+    }
+    .car-badge-row {
+      position: absolute; top: 16px; left: 16px;
+      display: flex; gap: 8px;
+    }
+    .img-badge {
+      padding: 5px 12px; border-radius: 50px; font-size: 0.75rem; font-weight: 700;
+      backdrop-filter: blur(12px);
+    }
+    .badge-type { background: rgba(255,107,0,0.85); color: white; }
+    .badge-fuel { background: rgba(26,107,60,0.85); color: white; }
+    .car-info-panel {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 32px; sticky: top 88px;
+    }
+    .car-city-tag {
+      display: flex; align-items: center; gap: 6px;
+      color: var(--text-muted); font-size: 0.83rem; margin-bottom: 8px;
+    }
+    .car-detail-name {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.9rem; font-weight: 800; line-height: 1.2; margin-bottom: 6px;
+    }
+    .car-detail-price {
+      font-size: 2rem; font-weight: 800; color: var(--primary); margin: 12px 0;
+    }
+    .car-detail-price span { font-size: 1rem; color: var(--text-muted); font-weight: 400; }
+    .specs-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 12px; margin: 20px 0;
+    }
+    .spec-item {
+      background: var(--bg-dark); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 14px;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .spec-label { color: var(--text-muted); font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .spec-value { font-weight: 700; font-size: 0.95rem; }
+    .booking-form-section {
+      background: rgba(255,107,0,0.05); border: 1px solid rgba(255,107,0,0.15);
+      border-radius: var(--radius); padding: 20px; margin-top: 20px;
+    }
+    .booking-form-section h3 { font-weight: 700; margin-bottom: 16px; font-size: 1rem; }
+    .cost-display {
+      background: var(--bg-dark); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 14px; margin: 16px 0;
+      display: none;
+    }
+    .cost-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.88rem; }
+    .cost-total { display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid var(--border); }
+    .cost-total-val { font-size: 1.3rem; font-weight: 700; color: var(--primary); }
+    .features-section { padding: 60px 20px; }
+    .features-wrap { max-width: 1100px; margin: 0 auto; }
+    .features-list {
+      display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-top: 28px;
+    }
+    .feature-pill {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 16px 20px;
+      display: flex; align-items: center; gap: 12px;
+      font-size: 0.88rem; font-weight: 500;
+    }
+    @media (max-width: 900px) {
+      .car-detail-grid { grid-template-columns: 1fr; }
+      .features-list { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 600px) { .features-list { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <div class="logo-icon">🚗</div>
+      <div class="logo-text">AP <span>Cars</span></div>
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="browse-cars.html" class="active">Browse Cars</a></li>
+    </ul>
+    <div class="nav-actions">
+      <div id="guestMenu">
+        <a href="login.html" class="btn btn-secondary btn-sm">Login</a>
+        <a href="register.html" class="btn btn-primary btn-sm">Register</a>
+      </div>
+      <div id="userMenu" style="display:none">
+        <a href="user-dashboard.html" class="btn btn-secondary btn-sm">Dashboard</a>
+        <button onclick="logout()" class="btn btn-sm" style="background:rgba(220,38,38,0.15);color:#fc8181;border:1px solid rgba(220,38,38,0.3)">Logout</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- Back Button -->
+<div style="padding: 80px 20px 0; max-width:1140px; margin:0 auto;">
+  <a href="browse-cars.html" class="btn btn-secondary btn-sm">← Back to Cars</a>
+</div>
+
+<!-- Car Detail Hero -->
+<section class="car-detail-hero">
+  <div class="car-detail-grid">
+
+    <!-- Gallery -->
+    <div class="car-gallery">
+      <div class="car-badge-row">
+        <span class="img-badge badge-type" id="typeBadge">SUV</span>
+        <span class="img-badge badge-fuel" id="fuelBadge">Diesel</span>
+      </div>
+      <img src="" alt="Car Image" class="main-img" id="carMainImg" onerror="this.src='https://via.placeholder.com/700x380/161B22/FF6B00?text=AP+Cars'"/>
+
+      <!-- Car Description -->
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-top:20px">
+        <h3 style="font-weight:700;margin-bottom:10px">About This Car</h3>
+        <p id="carDesc" style="color:var(--text-secondary);font-size:0.9rem;line-height:1.7">Loading car details...</p>
+      </div>
+
+      <!-- What's Included -->
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-top:16px">
+        <h3 style="font-weight:700;margin-bottom:16px">What's Included</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:0.85rem"><span style="color:var(--secondary-light)">✓</span> Comprehensive Insurance</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:0.85rem"><span style="color:var(--secondary-light)">✓</span> Roadside Assistance 24/7</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:0.85rem"><span style="color:var(--secondary-light)">✓</span> Unlimited AP Kms</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:0.85rem"><span style="color:var(--secondary-light)">✓</span> Clean & Sanitized</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:0.85rem"><span style="color:var(--secondary-light)">✓</span> Full Tank on Pickup</div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:0.85rem"><span style="color:var(--secondary-light)">✓</span> No Hidden Charges</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info Panel -->
+    <div class="car-info-panel">
+      <div class="car-city-tag">📍 <span id="carCity">Loading...</span></div>
+      <h1 class="car-detail-name" id="carName">Loading...</h1>
+      <div class="car-detail-price" id="carPrice">₹–<span>/day</span></div>
+
+      <!-- Specs -->
+      <div class="specs-grid" id="specsGrid">
+        <div class="spec-item"><div class="spec-label">Type</div><div class="spec-value" id="sType">–</div></div>
+        <div class="spec-item"><div class="spec-label">Fuel</div><div class="spec-value" id="sFuel">–</div></div>
+        <div class="spec-item"><div class="spec-label">Transmission</div><div class="spec-value" id="sTrans">–</div></div>
+        <div class="spec-item"><div class="spec-label">Seats</div><div class="spec-value" id="sSeats">–</div></div>
+        <div class="spec-item"><div class="spec-label">Year</div><div class="spec-value" id="sYear">–</div></div>
+        <div class="spec-item"><div class="spec-label">Reg. No.</div><div class="spec-value" id="sReg" style="font-size:0.8rem">–</div></div>
+      </div>
+
+      <!-- Availability -->
+      <div id="availabilityBadge" style="margin-bottom:16px"></div>
+
+      <!-- Booking Form -->
+      <div class="booking-form-section" id="bookingFormSection">
+        <h3>📅 Book This Car</h3>
+        <div class="field-group" style="margin-bottom:12px">
+          <label style="display:block;font-size:0.75rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Pickup City</label>
+          <select id="bPickupCity" style="width:100%;padding:11px 14px;background:var(--bg-dark);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary);font-family:inherit">
+            <option>Visakhapatnam</option><option>Vijayawada</option><option>Tirupati</option>
+            <option>Guntur</option><option>Kakinada</option><option>Rajahmundry</option>
+            <option>Nellore</option><option>Kurnool</option>
+          </select>
+        </div>
+        <div class="field-group" style="margin-bottom:12px">
+          <label style="display:block;font-size:0.75rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Drop City</label>
+          <select id="bDropCity" style="width:100%;padding:11px 14px;background:var(--bg-dark);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary);font-family:inherit">
+            <option>Visakhapatnam</option><option>Vijayawada</option><option>Tirupati</option>
+            <option>Guntur</option><option>Kakinada</option><option>Rajahmundry</option>
+            <option>Nellore</option><option>Kurnool</option>
+          </select>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+          <div class="field-group">
+            <label style="display:block;font-size:0.75rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Pickup Date</label>
+            <input type="date" id="bPickupDate" style="width:100%;padding:11px 14px;background:var(--bg-dark);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary)"/>
+          </div>
+          <div class="field-group">
+            <label style="display:block;font-size:0.75rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Return Date</label>
+            <input type="date" id="bReturnDate" style="width:100%;padding:11px 14px;background:var(--bg-dark);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary)"/>
+          </div>
+        </div>
+        <div class="field-group" style="margin-bottom:12px">
+          <label style="display:block;font-size:0.75rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Special Requests (Optional)</label>
+          <input type="text" id="bSpecial" placeholder="Child seat, GPS navigator, etc." style="width:100%;padding:11px 14px;background:var(--bg-dark);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary);font-family:inherit"/>
+        </div>
+
+        <!-- Cost Display -->
+        <div class="cost-display" id="costDisplay">
+          <div class="cost-row"><span style="color:var(--text-muted)">Daily Rate</span><span id="cDailyRate">–</span></div>
+          <div class="cost-row"><span style="color:var(--text-muted)">Number of Days</span><span id="cDays">–</span></div>
+          <div class="cost-total">
+            <span style="font-weight:600">Total Estimate</span>
+            <span class="cost-total-val" id="cTotal">–</span>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px" id="bookNowBtn" onclick="proceedToBooking()">
+          🚗 Book Now
+        </button>
+        <p style="color:var(--text-muted);font-size:0.78rem;text-align:center;margin-top:10px">Free cancellation up to 24 hrs before pickup</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Similar Cars -->
+<section class="features-section">
+  <div class="features-wrap">
+    <h2 class="section-title" style="text-align:left;font-size:1.4rem;margin-bottom:8px">🚗 Similar Cars in the Area</h2>
+    <div class="cars-grid" id="similarCars" style="margin-top:20px">
+      <p style="color:var(--text-muted)">Loading...</p>
+    </div>
+  </div>
+</section>
+
+<div class="toast-container" id="toastContainer"></div>
+<script src="js/main.js"></script>
+<script>
+let currentCar = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  checkAuthState();
+  const params = new URLSearchParams(window.location.search);
+  const carId = params.get('id');
+
+  if (!carId) { window.location.href = 'browse-cars.html'; return; }
+
+  const today = new Date().toISOString().split('T')[0];
+  const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+  document.getElementById('bPickupDate').min = today;
+  document.getElementById('bPickupDate').value = today;
+  document.getElementById('bReturnDate').min = today;
+  document.getElementById('bReturnDate').value = tomorrow.toISOString().split('T')[0];
+  document.getElementById('bPickupDate').addEventListener('change', calcCost);
+  document.getElementById('bReturnDate').addEventListener('change', calcCost);
+
+  await loadCar(carId);
+  await loadSimilarCars();
+});
+
+async function loadCar(id) {
+  try {
+    currentCar = await apiFetch(`/api/cars/${id}`);
+  } catch(e) {
+    currentCar = getStaticCars().find(c => c.id == id);
+  }
+  if (!currentCar) { window.location.href = 'browse-cars.html'; return; }
+  renderCar();
+}
+
+function renderCar() {
+  const c = currentCar;
+  document.title = `${c.brand} ${c.model} – AP Car Rentals`;
+  document.getElementById('carMainImg').src  = c.imageUrl || '';
+  document.getElementById('carMainImg').alt  = `${c.brand} ${c.model}`;
+  document.getElementById('carName').textContent    = `${c.brand} ${c.model} ${c.year}`;
+  document.getElementById('carCity').textContent    = c.city;
+  document.getElementById('carPrice').innerHTML     = `₹${parseFloat(c.pricePerDay).toLocaleString('en-IN')}<span>/day</span>`;
+  document.getElementById('carDesc').textContent    = c.description || `Premium ${c.type.toLowerCase()} car available for rent in ${c.city}. Well-maintained, fully insured, ready for your Andhra Pradesh journey.`;
+  document.getElementById('typeBadge').textContent  = c.type;
+  document.getElementById('fuelBadge').textContent  = c.fuelType;
+  document.getElementById('sType').textContent      = c.type;
+  document.getElementById('sFuel').textContent      = c.fuelType;
+  document.getElementById('sTrans').textContent     = c.transmission;
+  document.getElementById('sSeats').textContent     = (c.seats || 5) + ' Seats';
+  document.getElementById('sYear').textContent      = c.year;
+  document.getElementById('sReg').textContent       = c.registrationNumber || 'AP' + new Date().getFullYear();
+  document.getElementById('bPickupCity').value      = c.city;
+
+  const avail = c.available !== false;
+  const ab = document.getElementById('availabilityBadge');
+  ab.innerHTML = `<span class="badge ${avail ? 'badge-green' : ''}" style="${avail ? '' : 'background:rgba(220,38,38,0.1);color:#fc8181;border:1px solid rgba(220,38,38,0.3)'}">
+    ${avail ? '✓ Available Now' : '✗ Currently Unavailable'}
+  </span>`;
+  const bookBtn = document.getElementById('bookNowBtn');
+  const bookSection = document.getElementById('bookingFormSection');
+  if (!avail) {
+    bookSection.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text-muted)"><div style="font-size:2rem;margin-bottom:8px">😔</div><p>This car is currently booked.</p><a href="browse-cars.html" class="btn btn-primary" style="margin-top:12px">Find Available Cars →</a></div>`;
+  }
+  calcCost();
+}
+
+async function loadSimilarCars() {
+  if (!currentCar) return;
+  let all;
+  try { all = await apiFetch('/api/cars'); } catch(e) { all = getStaticCars(); }
+  const similar = all.filter(c => c.id != currentCar.id && (c.city === currentCar.city || c.type === currentCar.type)).slice(0, 3);
+  const grid = document.getElementById('similarCars');
+  if (!similar.length) { grid.innerHTML = '<p style="color:var(--text-muted)">No similar cars found.</p>'; return; }
+  grid.innerHTML = similar.map(car => createCarCard(car, false).replace(
+    `<a href="browse-cars.html" class="btn btn-primary btn-sm">Book →</a>`,
+    `<a href="car-details.html?id=${car.id}" class="btn btn-primary btn-sm">View Details →</a>`
+  )).join('');
+}
+
+function calcCost() {
+  if (!currentCar) return;
+  const p = document.getElementById('bPickupDate').value;
+  const r = document.getElementById('bReturnDate').value;
+  const disp = document.getElementById('costDisplay');
+  if (p && r) {
+    const days = Math.ceil((new Date(r) - new Date(p)) / 86400000);
+    if (days > 0) {
+      const rate = parseFloat(currentCar.pricePerDay);
+      const total = days * rate;
+      document.getElementById('cDailyRate').textContent = `₹${rate.toLocaleString('en-IN')}`;
+      document.getElementById('cDays').textContent = `${days} day${days > 1 ? 's' : ''}`;
+      document.getElementById('cTotal').textContent = `₹${total.toLocaleString('en-IN')}`;
+      disp.style.display = 'block';
+    } else {
+      disp.style.display = 'none';
+    }
+  }
+}
+
+function proceedToBooking() {
+  const user = JSON.parse(localStorage.getItem('carRentalUser') || 'null');
+  if (!user) { showToast('Please login to book', 'info'); setTimeout(() => window.location.href='login.html', 1000); return; }
+  const p = document.getElementById('bPickupDate').value;
+  const r = document.getElementById('bReturnDate').value;
+  if (!p || !r) { showToast('Please select pickup and return dates', 'error'); return; }
+  const days = Math.ceil((new Date(r) - new Date(p)) / 86400000);
+  if (days <= 0) { showToast('Return date must be after pickup date', 'error'); return; }
+
+  const params = new URLSearchParams({
+    carId:      currentCar.id,
+    carName:    `${currentCar.brand} ${currentCar.model}`,
+    pickupCity: document.getElementById('bPickupCity').value,
+    dropCity:   document.getElementById('bDropCity').value,
+    pickupDate: p,
+    returnDate: r,
+    special:    document.getElementById('bSpecial').value,
+    total:      (days * parseFloat(currentCar.pricePerDay)).toFixed(2),
+    days:       days
+  });
+  window.location.href = `booking.html?${params.toString()}`;
+}
+</script>
+</body>
+</html>

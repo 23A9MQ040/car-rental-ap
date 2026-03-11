@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Browse Cars – AP Car Rentals</title>
+  <meta name="description"
+    content="Browse all available rental cars in Andhra Pradesh. Filter by city, type, fuel and price." />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+  <nav class="navbar">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">
+        <div class="logo-icon">🚗</div>
+        <div class="logo-text">AP <span>Cars</span></div>
+      </a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="browse-cars.html" class="active">Browse Cars</a></li>
+      </ul>
+      <div class="nav-actions">
+        <div id="guestMenu">
+          <a href="login.html" class="btn btn-secondary btn-sm">Login</a>
+          <a href="register.html" class="btn btn-primary btn-sm">Register</a>
+        </div>
+        <div id="userMenu" style="display:none">
+          <a href="user-dashboard.html" class="btn btn-secondary btn-sm">Dashboard</a>
+          <button onclick="logout()" class="btn btn-sm"
+            style="background:rgba(220,38,38,0.15);color:#fc8181;border:1px solid rgba(220,38,38,0.3)">Logout</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <header class="browse-header">
+      <div class="container">
+        <div class="badge badge-saffron" style="margin-bottom:12px">All Vehicles</div>
+        <h1 class="section-title" style="text-align:left;margin-bottom:8px">Browse Available Cars</h1>
+        <p style="color:var(--text-muted)">Explore our fleet across Andhra Pradesh – filter by city, type, or fuel</p>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+          <div class="field-group" style="min-width:160px">
+            <label>🏙️ City</label>
+            <select class="filter-select" id="fCity" onchange="applyFilters()">
+              <option value="">All Cities</option>
+              <option>Visakhapatnam</option>
+              <option>Vijayawada</option>
+              <option>Tirupati</option>
+              <option>Guntur</option>
+              <option>Kakinada</option>
+              <option>Rajahmundry</option>
+              <option>Nellore</option>
+              <option>Kurnool</option>
+            </select>
+          </div>
+          <div class="field-group" style="min-width:140px">
+            <label>🚗 Type</label>
+            <select class="filter-select" id="fType" onchange="applyFilters()">
+              <option value="">All Types</option>
+              <option value="HATCHBACK">Hatchback</option>
+              <option value="SEDAN">Sedan</option>
+              <option value="SUV">SUV</option>
+              <option value="LUXURY">Luxury</option>
+              <option value="MINIVAN">Minivan</option>
+            </select>
+          </div>
+          <div class="field-group" style="min-width:140px">
+            <label>⛽ Fuel</label>
+            <select class="filter-select" id="fFuel" onchange="applyFilters()">
+              <option value="">All Fuels</option>
+              <option value="PETROL">Petrol</option>
+              <option value="DIESEL">Diesel</option>
+              <option value="ELECTRIC">Electric</option>
+              <option value="HYBRID">Hybrid</option>
+              <option value="CNG">CNG</option>
+            </select>
+          </div>
+          <div class="field-group" style="min-width:160px">
+            <label>💰 Max Price/Day</label>
+            <select class="filter-select" id="fPrice" onchange="applyFilters()">
+              <option value="">Any Price</option>
+              <option value="1000">Under ₹1,000</option>
+              <option value="2000">Under ₹2,000</option>
+              <option value="3000">Under ₹3,000</option>
+              <option value="5000">Under ₹5,000</option>
+            </select>
+          </div>
+          <div class="field-group" style="min-width:140px">
+            <label>Sort By</label>
+            <select class="filter-select" id="fSort" onchange="applyFilters()">
+              <option value="price_asc">Price: Low to High</option>
+              <option value="price_desc">Price: High to Low</option>
+              <option value="name">Name A–Z</option>
+            </select>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="clearFilters()">✕ Clear</button>
+        </div>
+        <p class="results-count" id="resultsCount">Loading cars...</p>
+      </div>
+    </header>
+
+    <section style="padding:24px 20px 80px">
+      <div class="container">
+        <div class="cars-grid" id="carsGrid">
+          <p style="color:var(--text-muted);text-align:center;grid-column:1/-1;padding:60px">Loading cars...</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Booking Modal -->
+  <div class="modal-overlay" id="bookingModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title">📅 Book This Car</span>
+        <span class="modal-close" onclick="closeModal()">✕</span>
+      </div>
+      <div id="bookingCarInfo"
+        style="background:var(--bg-dark);border-radius:var(--radius);padding:16px;margin-bottom:20px"></div>
+      <div class="form-group">
+        <label>Pickup City</label>
+        <select id="bPickupCity" class="filter-select" style="width:100%;padding:12px 16px">
+          <option>Visakhapatnam</option>
+          <option>Vijayawada</option>
+          <option>Tirupati</option>
+          <option>Guntur</option>
+          <option>Kakinada</option>
+          <option>Rajahmundry</option>
+          <option>Nellore</option>
+          <option>Kurnool</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Drop City</label>
+        <select id="bDropCity" class="filter-select" style="width:100%;padding:12px 16px">
+          <option>Visakhapatnam</option>
+          <option>Vijayawada</option>
+          <option>Tirupati</option>
+          <option>Guntur</option>
+          <option>Kakinada</option>
+          <option>Rajahmundry</option>
+          <option>Nellore</option>
+          <option>Kurnool</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Pickup Date</label>
+          <input type="date" id="bPickupDate"
+            style="width:100%;padding:12px 16px;background:var(--bg-dark);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary)" />
+        </div>
+        <div class="form-group">
+          <label>Return Date</label>
+          <input type="date" id="bReturnDate"
+            style="width:100%;padding:12px 16px;background:var(--bg-dark);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary)" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Special Requests (Optional)</label>
+        <input type="text" id="bSpecial" placeholder="Child seat, GPS, etc."
+          style="width:100%;padding:12px 16px;background:var(--bg-dark);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-primary)" />
+      </div>
+      <div id="bookingSummary"
+        style="background:rgba(255,107,0,0.08);border:1px solid rgba(255,107,0,0.2);border-radius:var(--radius);padding:14px;margin-bottom:16px;display:none">
+        <strong>💰 Total Estimate:</strong> <span id="totalCost"
+          style="color:var(--primary);font-size:1.2rem;font-weight:700"></span>
+      </div>
+      <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="confirmBooking()">Confirm
+        Booking ✓</button>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+  <script src="js/main.js"></script>
+  <script>
+    let allCars = [];
+    let selectedCar = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      checkAuthState();
+      // Read URL params
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('city')) document.getElementById('fCity').value = params.get('city');
+      if (params.get('type')) document.getElementById('fType').value = params.get('type').toUpperCase();
+      await loadCars();
+
+      // Set min dates
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('bPickupDate').min = today;
+      document.getElementById('bPickupDate').value = today;
+      const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+      document.getElementById('bReturnDate').min = today;
+      document.getElementById('bReturnDate').value = tomorrow.toISOString().split('T')[0];
+
+      document.getElementById('bPickupDate').addEventListener('change', calcCost);
+      document.getElementById('bReturnDate').addEventListener('change', calcCost);
+    });
+
+    async function loadCars() {
+      try {
+        allCars = await apiFetch('/api/cars');
+      } catch (e) {
+        allCars = getStaticCars();
+      }
+      applyFilters();
+    }
+
+    function applyFilters() {
+      const city = document.getElementById('fCity').value;
+      const type = document.getElementById('fType').value;
+      const fuel = document.getElementById('fFuel').value;
+      const maxPrice = document.getElementById('fPrice').value;
+      const sort = document.getElementById('fSort').value;
+
+      let filtered = [...allCars];
+      if (city) filtered = filtered.filter(c => c.city === city);
+      if (type) filtered = filtered.filter(c => c.type === type);
+      if (fuel) filtered = filtered.filter(c => c.fuelType === fuel);
+      if (maxPrice) filtered = filtered.filter(c => parseFloat(c.pricePerDay) <= parseFloat(maxPrice));
+
+      if (sort === 'price_asc') filtered.sort((a, b) => a.pricePerDay - b.pricePerDay);
+      if (sort === 'price_desc') filtered.sort((a, b) => b.pricePerDay - a.pricePerDay);
+      if (sort === 'name') filtered.sort((a, b) => (a.brand + a.model).localeCompare(b.brand + b.model));
+
+      renderCars(filtered);
+    }
+
+    function clearFilters() {
+      ['fCity', 'fType', 'fFuel', 'fPrice'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('fSort').value = 'price_asc';
+      applyFilters();
+    }
+
+    function renderCars(cars) {
+      const grid = document.getElementById('carsGrid');
+      document.getElementById('resultsCount').textContent = `${cars.length} car${cars.length !== 1 ? 's' : ''} found`;
+      if (!cars.length) {
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--text-muted)"><div style="font-size:3rem;margin-bottom:16px">🔍</div><p>No cars found with selected filters.</p><button class="btn btn-primary" style="margin-top:16px" onclick="clearFilters()">Clear Filters</button></div>';
+        return;
+      }
+      grid.innerHTML = cars.map(car => createCarCard(car, true)).join('');
+    }
+
+    function openBookingModal(carId) {
+      const user = JSON.parse(localStorage.getItem('carRentalUser') || 'null');
+      if (!user) {
+        showToast('Please login to book a car', 'info');
+        setTimeout(() => window.location.href = 'login.html', 1200);
+        return;
+      }
+      selectedCar = allCars.find(c => c.id == carId);
+      if (!selectedCar) return;
+      document.getElementById('bookingCarInfo').innerHTML = `
+    <strong style="font-size:1rem">${selectedCar.brand} ${selectedCar.model} ${selectedCar.year}</strong><br/>
+    <span style="color:var(--text-muted);font-size:0.85rem">📍 ${selectedCar.city} · ₹${selectedCar.pricePerDay}/day</span>
+  `;
+      document.getElementById('bPickupCity').value = selectedCar.city;
+      document.getElementById('bookingSummary').style.display = 'none';
+      document.getElementById('bookingModal').classList.add('active');
+      calcCost();
+    }
+
+    function closeModal() {
+      document.getElementById('bookingModal').classList.remove('active');
+      selectedCar = null;
+    }
+
+    function calcCost() {
+      if (!selectedCar) return;
+      const p = document.getElementById('bPickupDate').value;
+      const r = document.getElementById('bReturnDate').value;
+      if (p && r) {
+        const days = Math.ceil((new Date(r) - new Date(p)) / 86400000);
+        if (days > 0) {
+          const total = days * parseFloat(selectedCar.pricePerDay);
+          document.getElementById('totalCost').textContent = `₹${total.toLocaleString('en-IN')} (${days} day${days > 1 ? 's' : ''})`;
+          document.getElementById('bookingSummary').style.display = 'block';
+        }
+      }
+    }
+
+    async function confirmBooking() {
+      const user = JSON.parse(localStorage.getItem('carRentalUser'));
+      const payload = {
+        carId: selectedCar.id, userId: user.id,
+        pickupCity: document.getElementById('bPickupCity').value,
+        dropCity: document.getElementById('bDropCity').value,
+        pickupDate: document.getElementById('bPickupDate').value,
+        returnDate: document.getElementById('bReturnDate').value,
+        specialRequests: document.getElementById('bSpecial').value
+      };
+      try {
+        await apiFetch('/api/bookings', 'POST', payload);
+        showToast('🎉 Booking confirmed! Check your dashboard.', 'success');
+        closeModal();
+        loadCars();
+      } catch (e) {
+        showToast('❌ Booking failed: ' + e.message, 'error');
+      }
+    }
+  </script>
+</body>
+
+</html>
