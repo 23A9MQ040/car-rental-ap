@@ -55,6 +55,9 @@ public class Car {
     @Column(name = "image_url")
     private String imageUrl;
 
+    private Double latitude;
+    private Double longitude;
+
     @Column(length = 1000)
     private String description;
 

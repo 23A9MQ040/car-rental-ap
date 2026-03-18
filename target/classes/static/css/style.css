@@ -588,24 +588,30 @@ footer {
 .status-available   { background: rgba(40,168,92,0.15); color: #28a85c; }
 .status-unavailable { background: rgba(220,38,38,0.15); color: #fc8181; }
 
-/* ── Modal ── */
-.modal-overlay {
-  position: fixed; inset: 0; z-index: 2000;
-  background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
-  display: none; align-items: center; justify-content: center; padding: 20px;
-}
-.modal-overlay.active { display: flex; }
 .modal {
-  background: var(--bg-card); border: 1px solid var(--border);
-  border-radius: var(--radius-lg); padding: 32px; width: 100%; max-width: 520px;
-  max-height: 90vh; overflow-y: auto;
-  animation: fadeInScale 0.3s ease;
+  display: none; position: fixed; inset: 0; z-index: 2000;
+  background: rgba(0,0,0,0.8); backdrop-filter: blur(8px);
+  align-items: center; justify-content: center; padding: 20px;
 }
-@keyframes fadeInScale { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }
-.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-.modal-title { font-family: 'Poppins',sans-serif; font-weight: 700; font-size: 1.2rem; }
-.modal-close { cursor: pointer; color: var(--text-muted); font-size: 1.2rem; transition: color 0.2s; }
-.modal-close:hover { color: var(--text-primary); }
+.modal-content {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); width: 100%; position: relative;
+  box-shadow: var(--shadow); animation: slideUp 0.3s ease;
+}
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.btn-close {
+  background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+  color: var(--text-muted); width: 32px; height: 32px; border-radius: 50%;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: var(--transition);
+}
+.btn-close:hover { background: rgba(220,38,38,0.1); color: #fc8181; border-color: rgba(220,38,38,0.2); }
+#carMarker::after {
+  content: ''; position: absolute; inset: -10px;
+  border: 2px solid var(--primary); border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse { 0% { transform: scale(0.8); opacity: 0.8; } 100% { transform: scale(2); opacity: 0; } }
 
 /* ── Toast ── */
 .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 3000; display: flex; flex-direction: column; gap: 10px; }
