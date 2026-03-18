@@ -158,6 +158,37 @@
   </main>
 </div>
 
+<!-- Live Tracking Modal -->
+<div id="trackingModal" class="modal">
+  <div class="modal-content" style="max-width:800px;background:var(--bg-dark);padding:0;overflow:hidden">
+    <div class="modal-header" style="padding:24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <h2 id="trackingTitle">Live Tracking</h2>
+        <p id="trackingSubtitle" style="font-size:0.9rem;color:var(--text-muted)">Real-time telemetry from your rented vehicle</p>
+      </div>
+      <button class="btn-close" onclick="closeTracking()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:0;position:relative;height:450px;background:#0f172a">
+      <div id="mockMap" style="width:100%;height:100%;background-image:radial-gradient(var(--border) 1px, transparent 1px);background-size:30px 30px;position:relative">
+        <div id="carMarker" style="position:absolute;transition:all 3s linear;width:40px;height:40px;background:var(--primary);border-radius:50%;display:flex;justify-content:center;align-items:center;box-shadow:0 0 20px var(--primary);z-index:10">
+          <span style="font-size:1.2rem">🚗</span>
+          <div style="position:absolute;top:-40px;background:var(--bg-card);padding:4px 10px;border-radius:4px;font-size:0.75rem;white-space:nowrap;border:1px solid var(--primary);color:var(--text-primary)" id="markerLabel">
+            On the way...
+          </div>
+        </div>
+        <div style="position:absolute;bottom:20px;left:20px;background:rgba(0,0,0,0.6);padding:10px;border-radius:8px;font-size:0.7rem;font-family:monospace;color:var(--secondary-light);border:1px solid rgba(255,255,255,0.1)">
+          Lat: <span id="trackLat">0.0000</span><br/>
+          Lng: <span id="trackLng">0.0000</span><br/>
+          Speed: <span id="trackSpeed">45 km/h</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer" style="padding:16px 24px;background:var(--bg-card);border-top:1px solid var(--border);display:flex;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeTracking()">Close</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast-container" id="toastContainer"></div>
 <script src="js/main.js"></script>
 <script>
@@ -221,7 +252,11 @@ function bookingRow(b, cols) {
       <td>${b.pickupDate} → ${b.returnDate}</td>
       <td style="color:var(--primary);font-weight:600">₹${parseFloat(b.totalCost).toLocaleString('en-IN')}</td>
       <td><span class="status-badge ${statusClass}">${b.status}</span></td>
-      <td>${canCancel ? `<button class="btn btn-sm" style="background:rgba(220,38,38,0.15);color:#fc8181;border:1px solid rgba(220,38,38,0.3)" onclick="cancelBooking(${b.id})">Cancel</button>` : '–'}</td>
+      <td>
+        ${(b.status==='ACTIVE' || b.status==='CONFIRMED') ? `<button class="btn btn-sm" style="background:rgba(59,130,246,0.1);color:var(--secondary-light);border:1px solid rgba(59,130,246,0.2);margin-right:4px" onclick="openTracking(${b.car?.id})">📍 Track</button>` : ''}
+        ${canCancel ? `<button class="btn btn-sm" style="background:rgba(220,38,38,0.15);color:#fc8181;border:1px solid rgba(220,38,38,0.3)" onclick="cancelBooking(${b.id})">Cancel</button>` : ''}
+        ${(!canCancel && b.status!=='ACTIVE' && b.status!=='CONFIRMED') ? '–' : ''}
+      </td>
     </tr>`;
   }
   return `<tr>
@@ -233,7 +268,11 @@ function bookingRow(b, cols) {
     <td>${b.returnDate}</td>
     <td style="color:var(--primary);font-weight:600">₹${parseFloat(b.totalCost).toLocaleString('en-IN')}</td>
     <td><span class="status-badge ${statusClass}">${b.status}</span></td>
-    <td>${canCancel ? `<button class="btn btn-sm" style="background:rgba(220,38,38,0.15);color:#fc8181;border:1px solid rgba(220,38,38,0.3)" onclick="cancelBooking(${b.id})">Cancel</button>` : '–'}</td>
+    <td>
+      ${(b.status==='ACTIVE' || b.status==='CONFIRMED') ? `<button class="btn btn-sm" style="background:rgba(59,130,246,0.1);color:var(--secondary-light);border:1px solid rgba(59,130,246,0.2);margin-right:4px" onclick="openTracking(${b.car?.id})">📍 Track</button>` : ''}
+      ${canCancel ? `<button class="btn btn-sm" style="background:rgba(220,38,38,0.15);color:#fc8181;border:1px solid rgba(220,38,38,0.3)" onclick="cancelBooking(${b.id})">Cancel</button>` : ''}
+      ${(!canCancel && b.status!=='ACTIVE' && b.status!=='CONFIRMED') ? '–' : ''}
+    </td>
   </tr>`;
 }
 
@@ -257,6 +296,50 @@ function showSection(section) {
   const link = document.getElementById(`link-${section}`);
   if (link) link.classList.add('active');
 }
+
+// ══════ TRACKING MODAL LOGIC ══════
+let trackingCarId = null;
+function openTracking(carId) {
+  if (!carId) { showToast('Car information not available','error'); return; }
+  trackingCarId = carId;
+  const demoCars = JSON.parse(localStorage.getItem('demo_cars') || '[]');
+  const car = demoCars.find(c => c.id === carId);
+  
+  document.getElementById('trackingTitle').textContent = car ? `Tracking ${car.brand} ${car.model}` : 'Live Tracking';
+  document.getElementById('trackingModal').style.display = 'flex';
+  updateMarker();
+}
+
+function closeTracking() {
+  document.getElementById('trackingModal').style.display = 'none';
+  trackingCarId = null;
+}
+
+function updateMarker() {
+  if (!trackingCarId) return;
+  const demoCars = JSON.parse(localStorage.getItem('demo_cars') || '[]');
+  const car = demoCars.find(c => c.id === trackingCarId);
+  if (!car || !car.lat) return;
+
+  const marker = document.getElementById('carMarker');
+  const latEl = document.getElementById('trackLat');
+  const lngEl = document.getElementById('trackLng');
+  const speedEl = document.getElementById('trackSpeed');
+
+  const top = ((19 - car.lat) / 7) * 100;
+  const left = ((car.lng - 76) / 8) * 100;
+
+  marker.style.top = `${Math.max(10, Math.min(90, top))}%`;
+  marker.style.left = `${Math.max(10, Math.min(90, left))}%`;
+  
+  latEl.textContent = car.lat.toFixed(6);
+  lngEl.textContent = car.lng.toFixed(6);
+  speedEl.textContent = `${(35 + Math.random() * 30).toFixed(0)} km/h`;
+}
+
+window.addEventListener('carsUpdated', () => {
+    if (trackingCarId) updateMarker();
+});
 </script>
 </body>
 </html>
