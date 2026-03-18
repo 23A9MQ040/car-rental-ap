@@ -104,7 +104,7 @@ function createCarCard(car, showBookBtn = false) {
 function getStaticCars() {
   return [
     { id:1, brand:'Hyundai', model:'Creta', year:2023, type:'SUV', fuelType:'DIESEL', transmission:'AUTOMATIC', seats:5, pricePerDay:3500, city:'Visakhapatnam', available:true,
-      imageUrl:'https://images.unsplash.com/photo-1669818815801-44626155694c?q=80&w=2070&auto=format&fit=crop', lat:17.6868, lng:83.2185 },
+      imageUrl:'https://images.unsplash.com/photo-1583121274602-3e2820c69888?q=80&w=2070&auto=format&fit=crop', lat:17.6868, lng:83.2185 },
     { id:2, brand:'Toyota', model:'Innova Crysta', year:2022, type:'MINIVAN', fuelType:'DIESEL', transmission:'MANUAL', seats:7, pricePerDay:4500, city:'Vijayawada', available:true,
       imageUrl:'https://images.unsplash.com/photo-1621359983222-796aa40ca38c?q=80&w=2070&auto=format&fit=crop', lat:16.5062, lng:80.6480 },
     { id:3, brand:'Maruti Suzuki', model:'Swift', year:2023, type:'HATCHBACK', fuelType:'PETROL', transmission:'MANUAL', seats:5, pricePerDay:1800, city:'Tirupati', available:true,
@@ -116,7 +116,7 @@ function getStaticCars() {
     { id:6, brand:'Honda', model:'City', year:2022, type:'SEDAN', fuelType:'PETROL', transmission:'AUTOMATIC', seats:5, pricePerDay:2500, city:'Rajahmundry', available:true,
       imageUrl:'https://images.unsplash.com/photo-1542362567-b058c02b3cfc?q=80&w=2070&auto=format&fit=crop', lat:17.0005, lng:81.8040 },
     { id:7, brand:'Mahindra', model:'Thar', year:2023, type:'SUV', fuelType:'DIESEL', transmission:'MANUAL', seats:4, pricePerDay:4000, city:'Kurnool', available:true,
-      imageUrl:'https://images.unsplash.com/photo-1603501091132-3596de06900f?q=80&w=2070&auto=format&fit=crop', lat:15.8281, lng:78.0373 },
+      imageUrl:'https://images.unsplash.com/photo-1533558701576-23c65e927342?q=80&w=2070&auto=format&fit=crop', lat:15.8281, lng:78.0373 },
     { id:8, brand:'Maruti Suzuki', model:'Dzire', year:2022, type:'SEDAN', fuelType:'CNG', transmission:'MANUAL', seats:5, pricePerDay:1500, city:'Nellore', available:true,
       imageUrl:'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?q=80&w=2070&auto=format&fit=crop', lat:14.4426, lng:79.9865 },
     { id:9, brand:'BMW', model:'X5', year:2023, type:'LUXURY', fuelType:'DIESEL', transmission:'AUTOMATIC', seats:5, pricePerDay:12000, city:'Visakhapatnam', available:true,
@@ -157,10 +157,17 @@ function startTrackingSimulation() {
 }
 
 // Initialize on load
+const CURRENT_DATA_VERSION = 5; // Forces update of old local storage data
 document.addEventListener('DOMContentLoaded', () => {
   checkAuthState();
-  if (!localStorage.getItem('demo_cars')) {
+  
+  // Cache-busting for local storage data
+  const storedVersion = localStorage.getItem('demo_data_version');
+  if (storedVersion != CURRENT_DATA_VERSION) {
+    console.log('Updating demo data version to ' + CURRENT_DATA_VERSION);
     localStorage.setItem('demo_cars', JSON.stringify(getStaticCars()));
+    localStorage.setItem('demo_data_version', CURRENT_DATA_VERSION);
   }
+
   startTrackingSimulation();
 });
