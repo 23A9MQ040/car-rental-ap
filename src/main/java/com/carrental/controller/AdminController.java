@@ -6,10 +6,12 @@ import com.carrental.entity.User;
 import com.carrental.repository.UserRepository;
 import com.carrental.service.BookingService;
 import com.carrental.service.CarService;
+import com.carrental.service.ImageValidationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -19,7 +21,13 @@ public class AdminController {
 
     private final CarService carService;
     private final BookingService bookingService;
+    private final ImageValidationService imageValidationService;
     private final UserRepository userRepository;
+
+    @PostMapping("/audit-images")
+    public ResponseEntity<Map<String, Object>> auditImages() {
+        return ResponseEntity.ok(imageValidationService.auditAllCarImages());
+    }
 
     // --- Car Management ---
     @GetMapping("/cars")

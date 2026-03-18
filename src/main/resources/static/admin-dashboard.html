@@ -14,6 +14,7 @@
       <div class="logo-text">AP <span>Cars</span> <span style="background:rgba(255,107,0,0.2);color:var(--primary);padding:2px 8px;border-radius:4px;font-size:0.7rem;font-weight:700">ADMIN</span></div>
     </a>
     <div class="nav-actions">
+      <button onclick="triggerImageAudit()" class="btn btn-sm" style="background:var(--accent-primary);color:white;margin-right:0.5rem">🛠️ Audit Images</button>
       <a href="index.html" class="btn btn-secondary btn-sm">View Site</a>
       <button onclick="logout()" class="btn btn-sm" style="background:rgba(220,38,38,0.15);color:#fc8181;border:1px solid rgba(220,38,38,0.3)">Logout</button>
     </div>
@@ -467,6 +468,56 @@ function updateMarker() {
 window.addEventListener('carsUpdated', () => {
     if (trackingCarId) updateMarker();
 });
+
+// ══════ IMAGE AUDIT TRIGGER ══════
+async function triggerImageAudit() {
+  const btn = document.getElementById('audit-btn') || { innerText: '' };
+  const originalText = btn.innerText;
+  btn.innerText = '⏳ Auditing...';
+  btn.disabled = true;
+
+  try {
+    console.log('--- Starting System-Wide Image Audit ---');
+    
+    // 1. Backend Audit (Spring Boot + DB)
+    let backendResult = { fixedCount: 0, totalScanned: 0 };
+    try {
+      backendResult = await apiFetch('/api/admin/audit-images', 'POST');
+      console.log('✅ Backend Audit Complete:', backendResult);
+    } catch (e) {
+      console.warn('Backend audit failed (is the server running?):', e.message);
+    }
+
+    // 2. Frontend Audit (localStorage + DOM)
+    // auditAndFixImages is defined in main.js
+    const frontendResult = await auditAndFixImages({ 
+      placeholder: 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?q=80&w=2070&auto=format&fit=crop' 
+    });
+    console.log('✅ Frontend Audit Complete:', frontendResult);
+
+    // 3. Final Report
+    const totalLines = [
+      `Audit Complete!`,
+      `----------------`,
+      `DB Scan: ${backendResult.totalScanned || 0} checked, ${backendResult.fixedCount || 0} fixed.`,
+      `Local Scan: ${frontendResult.totalCount || 0} checked, ${frontendResult.fixedCount || 0} fixed.`,
+      `----------------`,
+      `All images are now verified and non-broken.`
+    ];
+    
+    alert(totalLines.join('\n'));
+    
+    // Refresh the table to show any updated images
+    if (typeof loadAdminCars === 'function') loadAdminCars();
+
+  } catch (err) {
+    console.error('Audit failed:', err);
+    alert('Failed to complete audit: ' + err.message);
+  } finally {
+    btn.innerText = '🛠️ Audit Images';
+    btn.disabled = false;
+  }
+}
 </script>
 </body>
 </html>

@@ -171,3 +171,97 @@ document.addEventListener('DOMContentLoaded', () => {
 
   startTrackingSimulation();
 });
+
+// ══════ AUTOMATED IMAGE AUDITOR ══════
+/**
+ * Scans all car images in the application (localStorage + DOM),
+ * detects null/broken URLs, and replaces them with a stable placeholder.
+ * @param {Object} config { placeholder: string, backup: string }
+ */
+async function auditAndFixImages(config = {}) {
+  const DEFAULT_PLACEHOLDER = 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?q=80&w=2070&auto=format&fit=crop';
+  const placeholder = config.placeholder || DEFAULT_PLACEHOLDER;
+  
+  console.log('🚀 Starting Automated Image Audit...');
+  const cars = JSON.parse(localStorage.getItem('demo_cars') || '[]');
+  let fixedCount = 0;
+  let validCount = 0;
+  let totalCount = cars.length;
+
+  const results = await Promise.all(cars.map(async (car) => {
+    const isBroken = !car.imageUrl || car.imageUrl.trim() === '' || car.imageUrl.includes('via.placeholder.com');
+    
+    if (isBroken) {
+      car.imageUrl = placeholder;
+      car._fixed = true;
+      fixedCount++;
+      return car;
+    }
+
+    // Check if URL is actually accessible
+    try {
+      const isOk = await verifyImageURL(car.imageUrl);
+      if (!isOk) {
+        car.imageUrl = placeholder;
+        car._fixed = true;
+        fixedCount++;
+      } else {
+        validCount++;
+      }
+    } catch (e) {
+      car.imageUrl = placeholder;
+      car._fixed = true;
+      fixedCount++;
+    }
+    return car;
+  }));
+
+  localStorage.setItem('demo_cars', JSON.stringify(results));
+  
+  // Apply visual feedback to DOM if on a page with car cards
+  applyAuditVisuals();
+
+  console.log('📊 Image Audit Summary:', {
+    totalScanned: totalCount,
+    fixed: fixedCount,
+    valid: validCount,
+    placeholderUsed: placeholder
+  });
+
+  if (fixedCount > 0) {
+    showToast(`Fixed ${fixedCount} broken images!`, 'success');
+    // Dispatch event to refresh UI
+    window.dispatchEvent(new CustomEvent('carsUpdated'));
+  }
+  
+  return { totalCount, fixedCount, validCount };
+}
+
+async function verifyImageURL(url) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(true);
+    img.onerror = () => resolve(false);
+    img.src = url;
+    // Timeout check
+    setTimeout(() => resolve(false), 5000);
+  });
+}
+
+function applyAuditVisuals() {
+  const cards = document.querySelectorAll('.car-card');
+  const cars = JSON.parse(localStorage.getItem('demo_cars') || '[]');
+  
+  cards.forEach(card => {
+    const id = card.id.split('-')[1];
+    const car = cars.find(c => c.id == id);
+    if (car && car._fixed) {
+      card.style.border = '2px solid #10b981'; // Green border for fixed
+      card.style.position = 'relative';
+      const badge = document.createElement('div');
+      badge.textContent = 'IMAGE FIXED';
+      badge.style = 'position:absolute;top:10px;left:10px;background:#10b981;color:white;font-size:10px;padding:2px 6px;border-radius:4px;z-index:5;font-weight:bold';
+      card.appendChild(badge);
+    }
+  });
+}
