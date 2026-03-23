@@ -69,9 +69,9 @@ function createCarCard(car, showBookBtn = false) {
   const typeBadge = { HATCHBACK:'🚗', SEDAN:'🚙', SUV:'🛻', LUXURY:'💎', MINIVAN:'🚐', TRUCK:'🚛' };
   const fuelBadge = { PETROL:'⛽ Petrol', DIESEL:'🛢️ Diesel', ELECTRIC:'⚡ Electric', HYBRID:'♻️ Hybrid', CNG:'🌿 CNG' };
   const isAvailable = car.available !== false;
-  const bookBtn = showBookBtn && isAvailable
-    ? `<a href="car-details.html?id=${car.id}" class="btn btn-primary btn-sm" id="book-btn-${car.id}">View Details</a>`
-    : `<span style="color:var(--text-muted);font-size:0.8rem">${isAvailable ? '' : 'Unavailable'}</span>`;
+  const bookBtn = (showBookBtn && isAvailable)
+    ? `<a href="car-details.html?id=${car.id}" class="btn btn-primary btn-sm" id="book-btn-${car.id}">Book →</a>`
+    : (isAvailable ? null : `<span style="color:var(--text-muted);font-size:0.8rem">Unavailable</span>`);
 
   return `
     <div class="car-card" id="car-${car.id}">
@@ -170,6 +170,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   startTrackingSimulation();
+  
+  // Proactive image audit (runs once per session to keep UI clean)
+  if (!sessionStorage.getItem('audit_performed')) {
+    auditAndFixImages().then(() => {
+      sessionStorage.setItem('audit_performed', 'true');
+    });
+  }
 });
 
 // ══════ AUTOMATED IMAGE AUDITOR ══════
