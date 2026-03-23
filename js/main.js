@@ -35,7 +35,7 @@ async function apiFetch(endpoint, method = 'GET', body = null) {
       setTimeout(() => {
         let users = JSON.parse(localStorage.getItem('demo_users') || '[]');
         if (users.length === 0) {
-          users.push({ id: 1, name: 'Admin', email: 'admin@apcars.com', password: 'admin', role: 'ADMIN', phone: '9999999999', city: 'Visakhapatnam' });
+          users.push({ id: 1, name: 'Admin', email: 'saivarma111357@gmail.com', password: '12345678', role: 'ADMIN', phone: '9999999999', city: 'Visakhapatnam' });
           localStorage.setItem('demo_users', JSON.stringify(users));
         }
 
@@ -228,7 +228,7 @@ function startTrackingSimulation() {
 }
 
 // Initialize on load
-const CURRENT_DATA_VERSION = 6; // Forces update of old local storage data
+const CURRENT_DATA_VERSION = 8; // Forces update of old local storage data
 document.addEventListener('DOMContentLoaded', () => {
   checkAuthState();
   
@@ -237,6 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (storedVersion != CURRENT_DATA_VERSION) {
     console.log('Updating demo data version to ' + CURRENT_DATA_VERSION);
     localStorage.setItem('demo_cars', JSON.stringify(getStaticCars()));
+    localStorage.removeItem('demo_users'); // Force reset so new admin is seeded
     localStorage.setItem('demo_data_version', CURRENT_DATA_VERSION);
   }
 
