@@ -5,22 +5,93 @@
 
 const API_BASE = 'http://localhost:8080';
 
-// ══════ API FETCH ══════
+// ══════ API FETCH / MOCK BACKEND ══════
 async function apiFetch(endpoint, method = 'GET', body = null) {
-  const token = localStorage.getItem('carRentalToken');
-  const headers = { 'Content-Type': 'application/json' };
-  if (token) headers['Authorization'] = 'Bearer ' + token;
+  try {
+    const token = localStorage.getItem('carRentalToken');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token && !token.startsWith('mock')) headers['Authorization'] = 'Bearer ' + token;
+    
+    const options = { method, headers };
+    if (body) options.body = JSON.stringify(body);
+    
+    // Attempt real backend fetch (fast timeout for offline detection)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    options.signal = controller.signal;
 
-  const options = { method, headers };
-  if (body) options.body = JSON.stringify(body);
+    const res = await fetch(API_BASE + endpoint, options);
+    clearTimeout(timeoutId);
 
-  const res = await fetch(API_BASE + endpoint, options);
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(err || 'Request failed with status ' + res.status);
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(err || 'Request failed with status ' + res.status);
+    }
+    const text = await res.text();
+    return text ? JSON.parse(text) : null;
+  } catch (error) {
+    console.warn(`[API] Real backend unavailable for ${endpoint}. Using mock fallback.`);
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        let users = JSON.parse(localStorage.getItem('demo_users') || '[]');
+        if (users.length === 0) {
+          users.push({ id: 1, name: 'Admin', email: 'admin@apcars.com', password: 'admin', role: 'ADMIN', phone: '9999999999', city: 'Visakhapatnam' });
+          localStorage.setItem('demo_users', JSON.stringify(users));
+        }
+
+        if (endpoint === '/api/auth/login' && method === 'POST') {
+          const user = users.find(u => u.email === body.email && u.password === body.password);
+          if (user) resolve({ token: 'mock-token-' + user.id, userId: user.id, name: user.name, email: user.email, role: user.role });
+          else reject(new Error('Invalid credentials'));
+        } 
+        else if (endpoint === '/api/auth/register' && method === 'POST') {
+          if (users.find(u => u.email === body.email)) reject(new Error('Email already registered'));
+          else {
+            const newUser = { id: Date.now(), ...body, role: 'USER' };
+            users.push(newUser);
+            localStorage.setItem('demo_users', JSON.stringify(users));
+            resolve({ token: 'mock-token-' + newUser.id, userId: newUser.id, name: newUser.name, email: newUser.email, role: 'USER' });
+          }
+        }
+        else if (endpoint === '/api/admin/cars' && method === 'GET') {
+          resolve(JSON.parse(localStorage.getItem('demo_cars') || '[]'));
+        }
+        else if (endpoint === '/api/admin/cars' && method === 'POST') {
+          let cars = JSON.parse(localStorage.getItem('demo_cars') || '[]');
+          const newCar = { id: Date.now(), ...body };
+          cars.push(newCar);
+          localStorage.setItem('demo_cars', JSON.stringify(cars));
+          resolve(newCar);
+        }
+        else if (endpoint.match(/\/api\/admin\/cars\/(\d+)/) && method === 'DELETE') {
+          const id = parseInt(endpoint.split('/').pop());
+          let cars = JSON.parse(localStorage.getItem('demo_cars') || '[]');
+          cars = cars.filter(c => c.id !== id);
+          localStorage.setItem('demo_cars', JSON.stringify(cars));
+          resolve({ success: true });
+        }
+        else if (endpoint === '/api/admin/users' && method === 'GET') {
+          resolve(users);
+        }
+        else if (endpoint === '/api/admin/bookings' && method === 'GET') {
+          resolve(JSON.parse(localStorage.getItem('demo_bookings') || '[]'));
+        }
+        else if (endpoint.match(/\/api\/admin\/bookings\/(\d+)\/status/) && method === 'PUT') {
+          const urlParams = new URLSearchParams(endpoint.split('?')[1]);
+          const status = urlParams.get('status');
+          const id = parseInt(endpoint.split('/')[4]);
+          let bookings = JSON.parse(localStorage.getItem('demo_bookings') || '[]');
+          const b = bookings.find(x => x.id === id);
+          if (b) b.status = status;
+          localStorage.setItem('demo_bookings', JSON.stringify(bookings));
+          resolve({ success: true });
+        }
+        else {
+          resolve({}); 
+        }
+      }, 150);
+    });
   }
-  const text = await res.text();
-  return text ? JSON.parse(text) : null;
 }
 
 // ══════ AUTH STATE ══════
@@ -104,35 +175,35 @@ function createCarCard(car, showBookBtn = false) {
 function getStaticCars() {
   return [
     { id:1, brand:'Hyundai', model:'Creta', year:2023, type:'SUV', fuelType:'DIESEL', transmission:'AUTOMATIC', seats:5, pricePerDay:3500, city:'Visakhapatnam', available:true,
-      imageUrl:'https://images.unsplash.com/photo-1583121274602-3e2820c69888?q=80&w=2070&auto=format&fit=crop', lat:17.6868, lng:83.2185 },
+      imageUrl:'https://imgd.aeplcdn.com/1056x594/n/cw/ec/141115/creta-exterior-right-front-three-quarter-1.jpeg', lat:17.6868, lng:83.2185 },
     { id:2, brand:'Toyota', model:'Innova Crysta', year:2022, type:'MINIVAN', fuelType:'DIESEL', transmission:'MANUAL', seats:7, pricePerDay:4500, city:'Vijayawada', available:true,
-      imageUrl:'https://images.unsplash.com/photo-1621359983222-796aa40ca38c?q=80&w=2070&auto=format&fit=crop', lat:16.5062, lng:80.6480 },
+      imageUrl:'https://imgd.aeplcdn.com/1056x594/n/cw/ec/140809/innova-crysta-exterior-right-front-three-quarter-2.jpeg', lat:16.5062, lng:80.6480 },
     { id:3, brand:'Maruti Suzuki', model:'Swift', year:2023, type:'HATCHBACK', fuelType:'PETROL', transmission:'MANUAL', seats:5, pricePerDay:1800, city:'Tirupati', available:true,
-      imageUrl:'https://images.unsplash.com/photo-1590362891991-f776e747a588?q=80&w=2070&auto=format&fit=crop', lat:13.6285, lng:79.4192 },
+      imageUrl:'https://imgd.aeplcdn.com/1056x594/n/cw/ec/159251/swift-exterior-right-front-three-quarter-2.jpeg', lat:13.6285, lng:79.4192 },
     { id:4, brand:'Kia', model:'Seltos', year:2023, type:'SUV', fuelType:'PETROL', transmission:'AUTOMATIC', seats:5, pricePerDay:3200, city:'Guntur', available:true,
-      imageUrl:'https://images.unsplash.com/photo-1630149447720-41071da509c2?q=80&w=2070&auto=format&fit=crop', lat:16.3067, lng:80.4365 },
+      imageUrl:'https://imgd.aeplcdn.com/1056x594/n/cw/ec/144159/seltos-exterior-right-front-three-quarter-2.jpeg', lat:16.3067, lng:80.4365 },
     { id:5, brand:'Tata', model:'Nexon EV', year:2023, type:'SUV', fuelType:'ELECTRIC', transmission:'AUTOMATIC', seats:5, pricePerDay:3000, city:'Kakinada', available:true,
-      imageUrl:'https://images.unsplash.com/photo-1619767886558-efdc259cde1a?q=80&w=2070&auto=format&fit=crop', lat:16.9891, lng:82.2475 },
+      imageUrl:'https://imgd.aeplcdn.com/1056x594/n/cw/ec/159891/nexon-ev-facelift-exterior-right-front-three-quarter-3.jpeg', lat:16.9891, lng:82.2475 },
     { id:6, brand:'Honda', model:'City', year:2022, type:'SEDAN', fuelType:'PETROL', transmission:'AUTOMATIC', seats:5, pricePerDay:2500, city:'Rajahmundry', available:true,
-      imageUrl:'https://images.unsplash.com/photo-1542362567-b058c02b3cfc?q=80&w=2070&auto=format&fit=crop', lat:17.0005, lng:81.8040 },
+      imageUrl:'https://imgd.aeplcdn.com/1056x594/n/cw/ec/134287/city-exterior-right-front-three-quarter-77.jpeg', lat:17.0005, lng:81.8040 },
     { id:7, brand:'Mahindra', model:'Thar', year:2023, type:'SUV', fuelType:'DIESEL', transmission:'MANUAL', seats:4, pricePerDay:4000, city:'Kurnool', available:true,
-      imageUrl:'https://images.unsplash.com/photo-1533558701576-23c65e927342?q=80&w=2070&auto=format&fit=crop', lat:15.8281, lng:78.0373 },
+      imageUrl:'https://imgd.aeplcdn.com/1056x594/n/cw/ec/40087/thar-exterior-right-front-three-quarter-35.jpeg', lat:15.8281, lng:78.0373 },
     { id:8, brand:'Maruti Suzuki', model:'Dzire', year:2022, type:'SEDAN', fuelType:'CNG', transmission:'MANUAL', seats:5, pricePerDay:1500, city:'Nellore', available:true,
-      imageUrl:'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?q=80&w=2070&auto=format&fit=crop', lat:14.4426, lng:79.9865 },
+      imageUrl:'https://imgd.aeplcdn.com/1056x594/n/cw/ec/159265/dzire-exterior-right-front-three-quarter-2.jpeg', lat:14.4426, lng:79.9865 },
     { id:9, brand:'BMW', model:'X5', year:2023, type:'LUXURY', fuelType:'DIESEL', transmission:'AUTOMATIC', seats:5, pricePerDay:12000, city:'Visakhapatnam', available:true,
-      imageUrl:'https://images.unsplash.com/photo-1555215695-3004980ad54e?q=80&w=2070&auto=format&fit=crop', lat:17.7231, lng:83.3013 },
+      imageUrl:'https://imgd.aeplcdn.com/1056x594/n/cw/ec/152681/x5-exterior-right-front-three-quarter-3.jpeg', lat:17.7231, lng:83.3013 },
     { id:10, brand:'Mercedes-Benz', model:'E-Class', year:2023, type:'LUXURY', fuelType:'PETROL', transmission:'AUTOMATIC', seats:5, pricePerDay:15000, city:'Vijayawada', available:true,
-      imageUrl:'https://images.unsplash.com/photo-1594502184342-2e12f877aa73?q=80&w=2070&auto=format&fit=crop', lat:16.5150, lng:80.6276 },
+      imageUrl:'https://imgd.aeplcdn.com/1056x594/n/cw/ec/174421/e-class-lwd-exterior-right-front-three-quarter-2.jpeg', lat:16.5150, lng:80.6276 },
     { id:11, brand:'MG', model:'Hector', year:2023, type:'SUV', fuelType:'HYBRID', transmission:'AUTOMATIC', seats:5, pricePerDay:3800, city:'Tirupati', available:true,
-      imageUrl:'https://images.unsplash.com/photo-1620215175664-cb6c1737be70?q=80&w=2070&auto=format&fit=crop', lat:13.6285, lng:79.4192 },
+      imageUrl:'https://imgd.aeplcdn.com/1056x594/n/cw/ec/130583/hector-exterior-right-front-three-quarter-75.jpeg', lat:13.6285, lng:79.4192 },
     { id:12, brand:'Maruti Suzuki', model:'Ertiga', year:2022, type:'MINIVAN', fuelType:'PETROL', transmission:'MANUAL', seats:7, pricePerDay:2800, city:'Guntur', available:true,
-      imageUrl:'https://images.unsplash.com/photo-1615750278713-39ee800e84b7?q=80&w=2070&auto=format&fit=crop', lat:16.3067, lng:80.4365 },
+      imageUrl:'https://imgd.aeplcdn.com/1056x594/n/cw/ec/115777/ertiga-exterior-right-front-three-quarter-12.jpeg', lat:16.3067, lng:80.4365 },
     { id:13, brand:'Hyundai', model:'Verna', year:2023, type:'SEDAN', fuelType:'PETROL', transmission:'AUTOMATIC', seats:5, pricePerDay:2700, city:'Kakinada', available:true,
-      imageUrl:'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?q=80&w=2070&auto=format&fit=crop', lat:16.9891, lng:82.2475 },
+      imageUrl:'https://imgd.aeplcdn.com/1056x594/n/cw/ec/121943/verna-exterior-right-front-three-quarter-101.jpeg', lat:16.9891, lng:82.2475 },
     { id:14, brand:'Toyota', model:'Fortuner', year:2023, type:'SUV', fuelType:'DIESEL', transmission:'AUTOMATIC', seats:7, pricePerDay:6000, city:'Rajahmundry', available:true,
-      imageUrl:'https://images.unsplash.com/photo-1617469165786-8007eda3caa7?q=80&w=2070&auto=format&fit=crop', lat:17.0005, lng:81.8040 },
+      imageUrl:'https://imgd.aeplcdn.com/1056x594/n/cw/ec/44709/fortuner-exterior-right-front-three-quarter-20.jpeg', lat:17.0005, lng:81.8040 },
     { id:15, brand:'Mahindra', model:'XUV700', year:2023, type:'SUV', fuelType:'DIESEL', transmission:'AUTOMATIC', seats:7, pricePerDay:5000, city:'Kurnool', available:true,
-      imageUrl:'https://images.unsplash.com/photo-1615751072297-5a896d860d5e?q=80&w=2070&auto=format&fit=crop', lat:15.8281, lng:78.0373 }
+      imageUrl:'https://imgd.aeplcdn.com/1056x594/n/cw/ec/42355/xuv700-exterior-right-front-three-quarter-3.jpeg', lat:15.8281, lng:78.0373 }
   ];
 }
 
@@ -157,7 +228,7 @@ function startTrackingSimulation() {
 }
 
 // Initialize on load
-const CURRENT_DATA_VERSION = 5; // Forces update of old local storage data
+const CURRENT_DATA_VERSION = 6; // Forces update of old local storage data
 document.addEventListener('DOMContentLoaded', () => {
   checkAuthState();
   
