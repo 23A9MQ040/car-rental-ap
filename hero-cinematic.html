@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEON DRIVE - 3D Cinematic Hero</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-dark: #050508;
+  --purple: #1a0033;
+  --neon-blue: #00d4ff;
+  --neon-violet: #7b2fff;
+  --neon-cyan: #00ffe7;
+  --glass-bg: rgba(255, 255, 255, 0.04);
+  --glass-border: rgba(255, 255, 255, 0.08);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--bg-dark);
+  color: #fff;
+  font-family: 'Rajdhani', sans-serif;
+  overflow: hidden;
+  height: 100vh; width: 100vw;
+}
+
+/* ── OVERLAY SCANLINES ── */
+.scanlines {
+  position: absolute; top:0; left:0; width:100%; height:100%;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.03) 2px, rgba(255,255,255,0.03) 4px);
+  z-index: 100; pointer-events: none;
+}
+
+/* ── 3D SCENE CONTAINER ── */
+#scene-container {
+  position: absolute; top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  perspective: 1200px;
+  background: radial-gradient(circle at center 60%, var(--purple) 0%, var(--bg-dark) 70%);
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 1.5s ease-in;
+  z-index: 1;
+}
+
+/* Phase 0 */
+body.phase-0 #scene-container { opacity: 1; }
+
+/* ── GROUND PLANE ── */
+#ground {
+  position: absolute;
+  top: 60vh; left: -50%;
+  width: 200vw; height: 200vh;
+  background: 
+    linear-gradient(90deg, transparent 49%, var(--neon-blue) 49.5%, var(--neon-blue) 50.5%, transparent 51%),
+    repeating-linear-gradient(0deg, transparent, transparent 48px, rgba(0,212,255,0.2) 48px, rgba(0,212,255,0.2) 50px);
+  background-size: 100% 100%, 100% 100px;
+  transform: rotateX(80deg) translateZ(-50px);
+  transform-style: preserve-3d;
+  filter: blur(2px) drop-shadow(0 0 10px var(--neon-blue));
+  opacity: 0.6;
+}
+/* Drive effect */
+body.phase-4 #ground {
+  animation: driveSpeed 0.2s linear infinite;
+}
+@keyframes driveSpeed {
+  from { background-position: 0 0, 0 0; }
+  to { background-position: 0 0, 0 100px; }
+}
+
+/* ── DESK & AGENT ── */
+.reception {
+  position: absolute;
+  top: 55%; left: 30%;
+  transform: translate(-50%, -50%) translateZ(100px);
+  transform-style: preserve-3d;
+  z-index: 5;
+}
+.desk {
+  width: 180px; height: 80px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 0 20px rgba(0,212,255,0.2);
+  border-radius: 8px;
+  transform: translateY(20px);
+}
+.agent {
+  position: absolute;
+  bottom: 80px; left: 50px;
+  width: 40px; height: 100px;
+}
+.agent svg {
+  width: 100%; height: 100%;
+  stroke: var(--neon-blue);
+  fill: none;
+  stroke-width: 3;
+  filter: drop-shadow(0 0 8px var(--neon-blue));
+}
+.agent-arm {
+  transform-origin: 50% 10%;
+  transition: transform 1.5s ease;
+}
+body.phase-1 .agent-arm {
+  transform: rotate(-110deg);
+}
+
+/* ── CUSTOMER ── */
+.customer {
+  position: absolute;
+  top: 55%; left: 10%;
+  width: 40px; height: 100px;
+  transform: translate(-50%, -50%) translateZ(150px);
+  transition: left 1.5s ease-in-out;
+  z-index: 6;
+}
+.customer svg {
+  width: 100%; height: 100%;
+  stroke: var(--neon-violet);
+  fill: none;
+  stroke-width: 3;
+  filter: drop-shadow(0 0 8px var(--neon-violet));
+}
+.customer-leg {
+  transform-origin: 50% 0%;
+}
+body.phase-1 .customer, body.phase-2 .customer {
+  animation: walkLeftRight 0.5s infinite;
+}
+@keyframes walkLeftRight {
+  0% { transform: translate(-50%, -50%) translateZ(150px) rotate(2deg); }
+  50% { transform: translate(-50%, -55%) translateZ(150px) rotate(-2deg); }
+  100% { transform: translate(-50%, -50%) translateZ(150px) rotate(2deg); }
+}
+body.phase-1 .customer { left: 24%; }
+body.phase-2 .customer { 
+  transition: left 2s ease-in-out, transform 0.3s;
+  left: 65%; 
+}
+body.phase-2.entering .customer {
+  transform: translate(-50%,-50%) translateZ(150px) scale(0);
+  opacity: 0;
+}
+body.phase-3 .customer, body.phase-4 .customer { opacity: 0; }
+
+/* ── KEY OBJECT ── */
+.key-object {
+  position: absolute;
+  top: 10px; left: 70px;
+  width: 24px; height: 24px;
+  stroke: var(--neon-cyan); fill: none;
+  filter: drop-shadow(0 0 10px var(--neon-cyan));
+  transition: left 0.5s, top 0.5s, transform 0.5s;
+}
+body.phase-1 .key-object {
+  animation: keyPulse 1s infinite alternate;
+}
+body.phase-1.key-pass .key-object {
+  left: -20px; top: 15px; 
+  transform: scale(1.5);
+}
+body.phase-2 .key-object { opacity: 0; }
+@keyframes keyPulse {
+  to { filter: drop-shadow(0 0 25px var(--neon-cyan)); transform: rotate(15deg); }
+}
+
+/* ── 3D CAR ── */
+.car-wrapper {
+  position: absolute;
+  top: 55%; left: 70%;
+  width: 300px; height: 120px;
+  transform: translate(-50%, -50%) translateZ(50px);
+  transform-style: preserve-3d;
+  z-index: 4;
+}
+.car-body {
+  position: absolute; bottom: 20px;
+  width: 300px; height: 60px;
+  background: linear-gradient(135deg, #222, #111);
+  border-radius: 20px 60px 20px 20px;
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: inset 0 0 20px rgba(0,212,255,0.3);
+  overflow: hidden;
+}
+.car-body::after {
+  content:''; position: absolute; top:0; left:-100%; width:50%; height:100%;
+  background: linear-gradient(90deg, transparent, rgba(0,212,255,0.4), transparent);
+  animation: carShimmer 3s infinite;
+}
+@keyframes carShimmer { 100% { left: 200%; } }
+.car-roof {
+  position: absolute; bottom: 80px; left: 50px;
+  width: 160px; height: 40px;
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--neon-blue);
+  border-radius: 40px 60px 0 0;
+  box-shadow: 0 0 15px rgba(0,212,255,0.2) inset;
+}
+.car-door {
+  position: absolute; bottom: 20px; left: 60px;
+  width: 100px; height: 50px;
+  border: 1px solid rgba(0,212,255,0.4);
+  border-radius: 5px 5px 20px 5px;
+  transform-origin: left center;
+  transition: transform 0.5s;
+}
+body.phase-2.door-open .car-door {
+  transform: perspective(600px) rotateY(-60deg);
+}
+.wheel {
+  position: absolute; bottom: 0;
+  width: 50px; height: 50px;
+  background: #090909;
+  border-radius: 50%;
+  border: 3px solid #333;
+  box-shadow: 0 0 15px var(--neon-blue);
+  display: flex; justify-content: center; align-items: center;
+}
+.wheel::after {
+  content:''; width: 20px; height: 2px; background: var(--neon-cyan);
+}
+.wheel-front { right: 30px; }
+.wheel-back { left: 30px; }
+
+/* Car Engine & Lights */
+.headlight {
+  position: absolute; right: 5px; bottom: 40px;
+  width: 15px; height: 20px;
+  background: white; border-radius: 50%;
+  opacity: 0.2; transition: all 1s;
+}
+body.phase-2 .headlight {
+  animation: keyPulse 0.5s 3;
+}
+body.phase-3 .headlight, body.phase-4 .headlight {
+  opacity: 1; box-shadow: 0 0 50px 20px var(--neon-cyan);
+}
+.taillight {
+  position: absolute; left: 5px; bottom: 50px;
+  width: 10px; height: 15px; background: red;
+  border-radius: 5px 0 0 5px;
+  box-shadow: 0 0 15px red;
+}
+.exhaust {
+  position: absolute; left:-20px; bottom:15px;
+  width:40px; height:40px; background: radial-gradient(circle, rgba(255,255,255,0.8), transparent);
+  border-radius:50%; opacity:0; transform:scale(0);
+}
+body.phase-3 .exhaust {
+  animation: puff 0.8s ease-out;
+}
+@keyframes puff { 50% { opacity: 0.6; transform: scale(2); } 100% { opacity:0; transform: scale(4) translateX(-40px); } }
+body.phase-3 .car-wrapper {
+  animation: engineShake 0.1s infinite;
+}
+@keyframes engineShake {
+  0%,100% { transform: translate(-50%, -50%) translateZ(50px) translateY(0); }
+  50% { transform: translate(-50%, -50%) translateZ(50px) translateY(-2px); }
+}
+
+/* Drive Away */
+body.phase-4 .car-wrapper {
+  transition: left 3.5s cubic-bezier(0.25, 0, 0.5, 1);
+  left: 150vw;
+}
+body.phase-4 .wheel {
+  animation: spin 0.2s linear infinite;
+}
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+/* Speed lines */
+.speed-lines {
+  position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
+  z-index: 3; pointer-events: none; opacity: 0;
+}
+body.phase-4 .speed-lines { opacity: 1; }
+.line {
+  position: absolute; height: 2px; background: var(--neon-blue);
+  box-shadow: 0 0 10px var(--neon-blue);
+  animation: dash 0.5s linear infinite;
+}
+@keyframes dash {
+  0% { transform: translateX(100vw); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateX(-100vw); opacity: 0; }
+}
+
+/* ── UI GLASSMORPHISM OVERLAY ── */
+.ui-overlay {
+  position: absolute; top:0; left:0; width:100%; height:100%;
+  pointer-events: none; z-index: 50; padding: 40px;
+  display: flex; flex-direction: column; justify-content: space-between;
+}
+.header { display: flex; justify-content: space-between; align-items: start; }
+.logo-box {
+  display: flex; align-items: center; gap: 15px;
+}
+.logo-box svg { width: 40px; height: 40px; fill: var(--neon-cyan); filter: drop-shadow(0 0 8px var(--neon-cyan)); }
+h1 { font-family: var(--font-heading); font-size: 2rem; letter-spacing: 2px; }
+.status-pill {
+  background: var(--glass-bg); backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border); border-radius: 50px;
+  padding: 10px 20px; display: flex; align-items: center; gap: 10px;
+}
+.dot { width: 10px; height: 10px; background: #0f0; border-radius: 50%; box-shadow: 0 0 10px #0f0; animation: dotPulse 1.5s infinite; }
+@keyframes dotPulse { 50% { opacity: 0.4; } }
+
+.bottom-row {
+  display: flex; justify-content: space-between; align-items: flex-end;
+}
+.info-card {
+  background: var(--glass-bg); backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border); border-radius: 12px;
+  padding: 20px; width: 300px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  pointer-events: auto; transition: transform 0.3s, box-shadow 0.3s;
+}
+.info-card:hover {
+  transform: translateY(-4px); box-shadow: 0 15px 40px rgba(0,212,255,0.2);
+}
+.info-item { display: flex; align-items: center; gap: 15px; margin-bottom: 12px; }
+.info-item svg { width: 20px; fill: var(--neon-cyan); }
+.cta-box {
+  text-align: center; pointer-events: auto;
+}
+.cta-btn {
+  background: transparent; color: white;
+  border: 1px solid var(--neon-blue); border-radius: 8px;
+  padding: 15px 40px; font-family: var(--font-heading); font-size: 1.2rem;
+  box-shadow: inset 0 0 20px rgba(0,212,255,0.1), 0 0 20px rgba(0,212,255,0.2);
+  cursor: pointer; position: relative; overflow: hidden;
+  transition: all 0.3s;
+}
+.cta-btn::before {
+  content:''; position: absolute; top:0; left:-100%; width:100%; height:100%;
+  background: linear-gradient(90deg, transparent, rgba(0,212,255,0.4), var(--neon-blue));
+  transition: left 0.3s; z-index: -1;
+}
+.cta-btn:hover::before { left: 0; }
+.cta-desc { font-size: 0.8rem; color: #888; margin-top: 10px; letter-spacing: 1px; }
+
+/* Typing Text */
+.typing-box { position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%); text-align: center; z-index: 20;}
+.typing-title { font-family: var(--font-heading); font-size: 4vw; border-right: 4px solid var(--neon-cyan); white-space: nowrap; overflow: hidden; width: 0; text-shadow: 0 0 20px rgba(0,212,255,0.5); }
+.typing-sub { color: var(--neon-blue); letter-spacing: 4px; opacity: 0; transition: opacity 1s; }
+body.phase-0 .typing-title { animation: typing 1.5s steps(30) forwards, blink 0.5s step-end infinite; }
+body.phase-0 .typing-sub { opacity: 1; transition-delay: 1.5s; }
+@keyframes typing { to { width: 100%; } }
+@keyframes blink { 50% { border-color: transparent } }
+body.phase-1 .typing-box, body.phase-2 .typing-box, body.phase-3 .typing-box, body.phase-4 .typing-box { opacity: 0; transition: opacity 0.5s; }
+
+/* Canvas Particles */
+#particles { position: absolute; top:0; left:0; width:100%; height:100%; z-index: 2; pointer-events: none;}
+
+/* Frame Corners */
+.corner { position: absolute; width: 40px; height: 40px; border: 2px solid var(--neon-violet); pointer-events: none; z-index: 100;}
+.tl { top: 20px; left: 20px; border-right: none; border-bottom: none; }
+.tr { top: 20px; right: 20px; border-left: none; border-bottom: none; }
+.bl { bottom: 20px; left: 20px; border-right: none; border-top: none; }
+.br { bottom: 20px; right: 20px; border-left: none; border-top: none; }
+</style>
+</head>
+<body>
+
+<canvas id="particles"></canvas>
+<div class="scanlines"></div>
+
+<div class="corner tl"></div>
+<div class="corner tr"></div>
+<div class="corner bl"></div>
+<div class="corner br"></div>
+
+<div id="scene-container">
+  <div id="ground"></div>
+
+  <!-- Agent & Desk -->
+  <div class="reception">
+    <div class="agent">
+      <svg viewBox="0 0 100 200">
+        <circle cx="50" cy="30" r="20"/>
+        <line x1="50" y1="50" x2="50" y2="120"/>
+        <!-- Static arm -->
+        <line x1="50" y1="60" x2="20" y2="110"/>
+        <!-- Animated arm -->
+        <line class="agent-arm" x1="50" y1="60" x2="80" y2="110"/>
+      </svg>
+      <svg class="key-object" viewBox="0 0 24 24">
+        <path d="M7 14A5 5 0 0 1 7 4a5 5 0 0 1 4.5 7h4v3h3v3h-3v-3h-2v3h-3.5A5 5 0 0 1 7 14zm0-2a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+      </svg>
+    </div>
+    <div class="desk"></div>
+  </div>
+
+  <!-- Customer -->
+  <div class="customer">
+    <svg viewBox="0 0 100 200">
+      <circle cx="50" cy="30" r="20"/>
+      <line x1="50" y1="50" x2="50" y2="120"/>
+      <line x1="50" y1="60" x2="20" y2="110"/>
+      <line x1="50" y1="60" x2="90" y2="90"/> <!-- arm reaching -->
+      <!-- Legs -->
+      <line class="customer-leg" x1="50" y1="120" x2="30" y2="190"/>
+      <line class="customer-leg" x1="50" y1="120" x2="70" y2="190"/>
+    </svg>
+  </div>
+
+  <!-- Car Composite -->
+  <div class="car-wrapper">
+    <div class="car-body"></div>
+    <div class="car-door"></div>
+    <div class="car-roof"></div>
+    <div class="wheel wheel-front"></div>
+    <div class="wheel wheel-back"></div>
+    <div class="headlight"></div>
+    <div class="taillight"></div>
+    <div class="exhaust"></div>
+  </div>
+
+  <!-- Speed lines -->
+  <div class="speed-lines" id="speedLines"></div>
+</div>
+
+<div class="typing-box">
+  <h1 class="typing-title">CAR RENTAL SYSTEM</h1>
+  <p class="typing-sub">Premium Fleet • Instant Booking</p>
+</div>
+
+<div class="ui-overlay">
+  <div class="header">
+    <div class="logo-box">
+      <svg viewBox="0 0 100 100"><polygon points="50 5 95 25 95 75 50 95 5 75 5 25"/></svg>
+      <h1>NEON DRIVE</h1>
+    </div>
+    <div class="status-pill">
+      <div class="dot"></div>
+      <span>Fleet Available: 24</span>
+    </div>
+  </div>
+  
+  <div class="bottom-row">
+    <div class="info-card">
+      <div class="info-item">
+        <svg viewBox="0 0 24 24"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
+        <strong>Tesla Phantom X</strong>
+      </div>
+      <div class="info-item">
+        <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+        Pickup: Instant
+      </div>
+      <div class="info-item">
+        <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+        Insured & Verified
+      </div>
+    </div>
+    
+    <div class="cta-box">
+      <button class="cta-btn">BOOK YOUR RIDE ➔</button>
+      <div class="cta-desc">Powered by CarRental System v2.0</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Canvas Particles System
+const canvas = document.getElementById('particles');
+const ctx = canvas.getContext('2d');
+let w, h;
+let particles = [];
+
+function initResize() {
+  w = canvas.width = window.innerWidth;
+  h = canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', initResize);
+initResize();
+
+class Particle {
+  constructor() {
+    this.x = Math.random() * w;
+    this.y = Math.random() * h;
+    this.vx = (Math.random() - 0.5) * 0.5;
+    this.vy = Math.random() * -1 - 0.5;
+    this.r = Math.random() * 2 + 1;
+    this.alpha = Math.random() * 0.5 + 0.1;
+  }
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    if (this.y < 0) {
+      this.y = h;
+      this.x = Math.random() * w;
+    }
+  }
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(0, 212, 255, ${this.alpha})`;
+    ctx.fill();
+  }
+}
+for (let i = 0; i < 100; i++) particles.push(new Particle());
+
+function animateParticles() {
+  ctx.clearRect(0, 0, w, h);
+  particles.forEach(p => { p.update(); p.draw(); });
+  requestAnimationFrame(animateParticles);
+}
+animateParticles();
+
+// Speed lines generator
+const speedContainer = document.getElementById('speedLines');
+for(let i=0; i<8; i++) {
+  let line = document.createElement('div');
+  line.className = 'line';
+  line.style.top = Math.random() * 80 + 10 + '%';
+  line.style.width = Math.random() * 200 + 50 + 'px';
+  line.style.animationDuration = Math.random() * 0.4 + 0.2 + 's';
+  line.style.animationDelay = Math.random() * 0.5 + 's';
+  speedContainer.appendChild(line);
+}
+
+// Sequence Controller
+const sequence = [
+  { class: 'phase-0', time: 0 },
+  { class: 'phase-1', time: 1500 },
+  { action: () => document.body.classList.add('key-pass'), time: 3000 },
+  { class: 'phase-2', time: 4000 },
+  { action: () => document.body.classList.add('door-open'), time: 6000 },
+  { action: () => { document.body.classList.remove('door-open'); document.body.classList.add('entering'); }, time: 6500 },
+  { class: 'phase-3', time: 7000 },
+  { class: 'phase-4', time: 9000 },
+  { class: 'phase-5', action: () => document.body.className = '', time: 13000 }
+];
+
+function runLoop() {
+  document.body.className = '';
+  sequence.forEach(step => {
+    setTimeout(() => {
+      if (step.class) {
+        document.body.className = step.class; // Reset and assign main phase class
+      }
+      if (step.action) step.action();
+    }, step.time);
+  });
+}
+// Start immediate & loop every 15s
+runLoop();
+setInterval(runLoop, 15000);
+</script>
+</body>
+</html>
