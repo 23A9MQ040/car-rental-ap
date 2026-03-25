@@ -35,7 +35,7 @@
         </div>
         <div class="form-group">
           <label>Phone Number</label>
-          <input type="tel" id="phone" placeholder="+91 9876543210" required pattern="[0-9+\s\-]{10,14}"/>
+          <input type="tel" id="phone" placeholder="+91 6304467639" required pattern="[0-9+\s\-]{10,14}"/>
         </div>
       </div>
       <div class="form-group">
@@ -72,9 +72,16 @@
           </select>
         </div>
         <div class="form-group">
-          <label>Driving License No. (Optional)</label>
-          <input type="text" id="drivingLicense" placeholder="AP38 20210123456"/>
+          <label>Account Type</label>
+          <select id="role" required>
+            <option value="USER">Standard User (Rent Cars)</option>
+            <option value="OWNER">Car Owner (List & Rent Cars)</option>
+          </select>
         </div>
+      </div>
+      <div class="form-group">
+        <label>Driving License No. (Optional)</label>
+        <input type="text" id="drivingLicense" placeholder="AP38 20210123456"/>
       </div>
       <button type="submit" class="btn btn-primary form-submit btn-lg" id="registerBtn">
         Create My Account 🚗
@@ -87,7 +94,12 @@
 <script src="js/main.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  if (localStorage.getItem('carRentalToken')) window.location.href = 'user-dashboard.html';
+  if (localStorage.getItem('carRentalToken')) {
+     const user = JSON.parse(localStorage.getItem('carRentalUser') || '{}');
+     if (user.role === 'ADMIN') window.location.href = 'admin-dashboard.html';
+     else if (user.role === 'OWNER') window.location.href = 'owner-dashboard.html';
+     else window.location.href = 'user-dashboard.html';
+  }
 });
 
 async function handleRegister(e) {
@@ -113,7 +125,8 @@ async function handleRegister(e) {
     password:       password,
     phone:          document.getElementById('phone').value,
     city:           document.getElementById('city').value,
-    drivingLicense: document.getElementById('drivingLicense').value
+    drivingLicense: document.getElementById('drivingLicense').value,
+    role:           document.getElementById('role').value
   };
 
   try {
@@ -121,7 +134,11 @@ async function handleRegister(e) {
     localStorage.setItem('carRentalToken', data.token);
     localStorage.setItem('carRentalUser', JSON.stringify({ id: data.userId, name: data.name, email: data.email, role: data.role }));
     showToast('🎉 Account created! Welcome to AP Cars, ' + data.name, 'success');
-    setTimeout(() => window.location.href = 'user-dashboard.html', 1000);
+    setTimeout(() => {
+      if (data.role === 'ADMIN') window.location.href = 'admin-dashboard.html';
+      else if (data.role === 'OWNER') window.location.href = 'owner-dashboard.html';
+      else window.location.href = 'user-dashboard.html';
+    }, 1000);
   } catch (err) {
     errorMsg.textContent = '❌ ' + (err.message || 'Registration failed. Try a different email.');
     errorMsg.style.display = 'block';

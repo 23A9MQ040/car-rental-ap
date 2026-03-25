@@ -311,10 +311,7 @@ async function loadSimilarCars() {
   const similar = all.filter(c => c.id != currentCar.id && (c.city === currentCar.city || c.type === currentCar.type)).slice(0, 3);
   const grid = document.getElementById('similarCars');
   if (!similar.length) { grid.innerHTML = '<p style="color:var(--text-muted)">No similar cars found.</p>'; return; }
-  grid.innerHTML = similar.map(car => createCarCard(car, false).replace(
-    `<a href="browse-cars.html" class="btn btn-primary btn-sm">Book →</a>`,
-    `<a href="car-details.html?id=${car.id}" class="btn btn-primary btn-sm">View Details →</a>`
-  )).join('');
+  grid.innerHTML = similar.map(car => createCarCard(car, false)).join('');
 }
 
 function calcCost() {
