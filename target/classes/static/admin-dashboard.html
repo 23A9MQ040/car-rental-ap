@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard – AP Car Rentals</title>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+<nav class="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <div class="logo-icon">🚗</div>
+      <div class="logo-text">AP <span>Cars</span> <span style="background:rgba(255,107,0,0.2);color:var(--primary);padding:2px 8px;border-radius:4px;font-size:0.7rem;font-weight:700">ADMIN</span></div>
+    </a>
+    <div class="nav-actions">
+      <button onclick="triggerImageAudit()" class="btn btn-sm" style="background:var(--accent-primary);color:white;margin-right:0.5rem">🛠️ Audit Images</button>
+      <a href="index.html" class="btn btn-secondary btn-sm">View Site</a>
+      <button onclick="logout()" class="btn btn-sm" style="background:rgba(220,38,38,0.15);color:#fc8181;border:1px solid rgba(220,38,38,0.3)">Logout</button>
+    </div>
+  </div>
+</nav>
+
+<div class="dashboard-layout">
+  <!-- Admin Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-menu">
+      <p class="sidebar-section-label">Dashboard</p>
+      <div class="sidebar-link active" onclick="showSection('overview')" id="link-overview"><span>📊</span> Overview</div>
+      <p class="sidebar-section-label">Fleet</p>
+      <div class="sidebar-link" onclick="showSection('cars')" id="link-cars"><span>🚗</span> Manage Cars</div>
+      <div class="sidebar-link" onclick="showSection('addcar')" id="link-addcar"><span>➕</span> Add Vehicle</div>
+      <p class="sidebar-section-label">Operations</p>
+      <div class="sidebar-link" onclick="showSection('bookings')" id="link-bookings"><span>📋</span> All Bookings</div>
+      <div class="sidebar-link" onclick="showSection('users')" id="link-users"><span>👥</span> Customers</div>
+    </div>
+  </aside>
+
+  <main class="dashboard-main">
+
+    <!-- Overview -->
+    <div id="section-overview">
+      <div class="page-header">
+        <h1>Admin Dashboard</h1>
+        <p>AP Car Rentals – Operations & Analytics</p>
+      </div>
+      <div class="stat-cards" id="adminStats">
+        <div class="stat-card">
+          <div class="stat-card-label">Total Vehicles</div>
+          <div class="stat-card-value" id="sTotalCars">–</div>
+          <div class="stat-card-sub">In fleet</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Available Now</div>
+          <div class="stat-card-value" id="sAvailCars" style="color:var(--secondary-light)">–</div>
+          <div class="stat-card-sub">Ready to rent</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Total Bookings</div>
+          <div class="stat-card-value" id="sTotalBookings">–</div>
+          <div class="stat-card-sub">All time</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Revenue</div>
+          <div class="stat-card-value" id="sRevenue" style="color:var(--primary)">–</div>
+          <div class="stat-card-sub">Total ₹ INR</div>
+        </div>
+      </div>
+      <div class="data-table-wrap" style="margin-top:0">
+        <div class="table-header"><h3>Recent Bookings</h3></div>
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead><tr><th>ID</th><th>Customer</th><th>Car</th><th>Dates</th><th>Cost</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="recentBookingsTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Manage Cars -->
+    <div id="section-cars" style="display:none">
+      <div class="page-header">
+        <h1>Manage Fleet</h1>
+        <p>All vehicles in the AP Cars fleet</p>
+      </div>
+      <div class="data-table-wrap">
+        <div class="table-header">
+          <h3 id="fleetCount">All Vehicles</h3>
+          <button class="btn btn-primary btn-sm" onclick="showSection('addcar')">+ Add Car</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead><tr><th>ID</th><th>Vehicle</th><th>City</th><th>Type</th><th>Fuel</th><th>₹/Day</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="carsTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Car -->
+    <div id="section-addcar" style="display:none">
+      <div class="page-header">
+        <h1>Add New Vehicle</h1>
+        <p>Add a car to the AP Cars fleet</p>
+      </div>
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:32px;max-width:640px">
+        <form id="addCarForm" onsubmit="handleAddCar(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Brand</label>
+              <input type="text" id="cBrand" placeholder="Maruti Suzuki" required/>
+            </div>
+            <div class="form-group">
+              <label>Model</label>
+              <input type="text" id="cModel" placeholder="Swift" required/>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Year</label>
+              <input type="number" id="cYear" placeholder="2023" min="2015" max="2026" required/>
+            </div>
+            <div class="form-group">
+              <label>Seats</label>
+              <input type="number" id="cSeats" placeholder="5" min="2" max="12" required/>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Car Type</label>
+              <select id="cType" required>
+                <option value="">Select</option>
+                <option value="HATCHBACK">Hatchback</option>
+                <option value="SEDAN">Sedan</option>
+                <option value="SUV">SUV</option>
+                <option value="LUXURY">Luxury</option>
+                <option value="MINIVAN">Minivan</option>
+                <option value="TRUCK">Truck</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Fuel Type</label>
+              <select id="cFuel" required>
+                <option value="">Select</option>
+                <option value="PETROL">Petrol</option>
+                <option value="DIESEL">Diesel</option>
+                <option value="ELECTRIC">Electric</option>
+                <option value="HYBRID">Hybrid</option>
+                <option value="CNG">CNG</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Transmission</label>
+              <select id="cTransmission" required>
+                <option value="MANUAL">Manual</option>
+                <option value="AUTOMATIC">Automatic</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Price Per Day (₹)</label>
+              <input type="number" id="cPrice" placeholder="1500" min="500" required/>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>City</label>
+              <select id="cCity" required>
+                <option value="">Select City</option>
+                <option>Visakhapatnam</option><option>Vijayawada</option><option>Tirupati</option>
+                <option>Guntur</option><option>Kakinada</option><option>Rajahmundry</option>
+                <option>Nellore</option><option>Kurnool</option><option>Ongole</option>
+                <option>Eluru</option><option>Anantapur</option><option>Kadapa</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Registration No.</label>
+              <input type="text" id="cReg" placeholder="AP38AZ1234"/>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Image URL</label>
+            <input type="url" id="cImage" placeholder="https://..."/>
+          </div>
+          <div class="form-group">
+            <label>Description</label>
+            <input type="text" id="cDesc" placeholder="Brief car description..."/>
+          </div>
+          <button type="submit" class="btn btn-primary btn-lg form-submit" id="addCarBtn">Add Vehicle to Fleet</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- All Bookings -->
+    <div id="section-bookings" style="display:none">
+      <div class="page-header">
+        <h1>All Bookings</h1>
+        <p>Manage all customer reservations</p>
+      </div>
+      <div class="data-table-wrap">
+        <div class="table-header"><h3 id="bookingsCount">All Reservations</h3></div>
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead><tr><th>ID</th><th>Customer</th><th>Car</th><th>Pickup</th><th>Return</th><th>Cost</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="allBookingsTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Users -->
+    <div id="section-users" style="display:none">
+      <div class="page-header">
+        <h1>Customers</h1>
+        <p>All registered users on the platform</p>
+      </div>
+      <div class="data-table-wrap">
+        <div class="table-header"><h3 id="usersCount">All Customers</h3></div>
+        <div style="overflow-x:auto">
+          <table class="data-table">
+            <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>City</th><th>Role</th></tr></thead>
+            <tbody id="usersTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Live Tracking Modal -->
+<div id="trackingModal" class="modal">
+  <div class="modal-content" style="max-width:800px;background:var(--bg-dark);padding:0;overflow:hidden">
+    <div class="modal-header" style="padding:24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <h2 id="trackingTitle">Live Tracking</h2>
+        <p id="trackingSubtitle" style="font-size:0.9rem;color:var(--text-muted)">Real-time telemetry from vehicle AP-XX-XXXX</p>
+      </div>
+      <button class="btn-close" onclick="closeTracking()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:0;position:relative;height:450px;background:#0f172a">
+      <!-- Mock Map View -->
+      <div id="mockMap" style="width:100%;height:100%;background-image:radial-gradient(var(--border) 1px, transparent 1px);background-size:30px 30px;position:relative">
+        <div id="carMarker" style="position:absolute;transition:all 3s linear;width:40px;height:40px;background:var(--primary);border-radius:50%;display:flex;justify-content:center;align-items:center;box-shadow:0 0 20px var(--primary);z-index:10">
+          <span style="font-size:1.2rem">🚗</span>
+          <div style="position:absolute;top:-40px;background:var(--bg-card);padding:4px 10px;border-radius:4px;font-size:0.75rem;white-space:nowrap;border:1px solid var(--primary);color:var(--text-primary)" id="markerLabel">
+            Moving...
+          </div>
+        </div>
+        <!-- Grid overlay -->
+        <div style="position:absolute;bottom:20px;left:20px;background:rgba(0,0,0,0.6);padding:10px;border-radius:8px;font-size:0.7rem;font-family:monospace;color:var(--secondary-light);border:1px solid rgba(255,255,255,0.1)">
+          Lat: <span id="trackLat">0.0000</span><br/>
+          Lng: <span id="trackLng">0.0000</span><br/>
+          Speed: <span id="trackSpeed">42 km/h</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer" style="padding:16px 24px;background:var(--bg-card);border-top:1px solid var(--border);display:flex;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeTracking()">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+<script src="js/main.js"></script>
+<script>
+let adminCars = [], adminBookings = [], adminUsers = [];
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const user = JSON.parse(localStorage.getItem('carRentalUser') || 'null');
+  if (!user) { window.location.href='login.html'; return; }
+  if (user.role !== 'ADMIN') { window.location.href='user-dashboard.html'; return; }
+  await Promise.all([loadCars(), loadBookings(), loadUsers()]);
+  renderOverview();
+});
+
+async function loadCars() {
+  try { adminCars = await apiFetch('/api/admin/cars'); } catch(e) { adminCars = getStaticCars(); }
+}
+async function loadBookings() {
+  try { adminBookings = await apiFetch('/api/admin/bookings'); } catch(e) { adminBookings = []; }
+}
+async function loadUsers() {
+  try { adminUsers = await apiFetch('/api/admin/users'); } catch(e) { adminUsers = []; }
+}
+
+function renderOverview() {
+  document.getElementById('sTotalCars').textContent = adminCars.length;
+  document.getElementById('sAvailCars').textContent = adminCars.filter(c=>c.available).length;
+  document.getElementById('sTotalBookings').textContent = adminBookings.length;
+  const rev = adminBookings.filter(b=>b.status!=='CANCELLED').reduce((s,b)=>s+parseFloat(b.totalCost||0),0);
+  document.getElementById('sRevenue').textContent = '₹'+rev.toLocaleString('en-IN');
+  const tbody = document.getElementById('recentBookingsTbody');
+  const recent = adminBookings.slice(0,8);
+  if (!recent.length) { tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:32px">No bookings yet</td></tr>'; return; }
+  tbody.innerHTML = recent.map(b => {
+    const sc = `status-${(b.status||'pending').toLowerCase()}`;
+    return `<tr>
+      <td>#${b.id}</td>
+      <td>${b.user?.name||'–'}</td>
+      <td>${b.car?.brand||''} ${b.car?.model||''}</td>
+      <td>${b.pickupDate} → ${b.returnDate}</td>
+      <td style="color:var(--primary);font-weight:600">₹${parseFloat(b.totalCost||0).toLocaleString('en-IN')}</td>
+      <td><span class="status-badge ${sc}">${b.status}</span></td>
+      <td>
+        <select onchange="updateStatus(${b.id},this.value)" style="background:var(--bg-dark);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);padding:4px 8px;font-size:0.8rem">
+          <option>–</option>
+          <option value="CONFIRMED">Confirm</option>
+          <option value="ACTIVE">Active</option>
+          <option value="COMPLETED">Complete</option>
+          <option value="CANCELLED">Cancel</option>
+        </select>
+      </td>
+    </tr>`;
+  }).join('');
+
+  // Cars table
+  document.getElementById('fleetCount').textContent = `Fleet: ${adminCars.length} vehicles`;
+  const carsTbody = document.getElementById('carsTbody');
+  carsTbody.innerHTML = adminCars.map(c => {
+    const avail = c.available ? 'available' : 'unavailable';
+    return `<tr>
+      <td>#${c.id}</td>
+      <td><strong>${c.brand} ${c.model}</strong><br/><small style="color:var(--text-muted)">${c.year}</small></td>
+      <td>📍 ${c.city}</td>
+      <td><span class="badge badge-saffron" style="font-size:0.7rem">${c.type}</span></td>
+      <td>${c.fuelType}</td>
+      <td style="color:var(--primary);font-weight:600">₹${parseFloat(c.pricePerDay).toLocaleString('en-IN')}</td>
+      <td><span class="status-badge status-${avail}">${c.available?'Available':'Rented'}</span></td>
+      <td>
+        <button class="btn btn-sm" style="background:rgba(59,130,246,0.1);color:var(--secondary-light);border:1px solid rgba(59,130,246,0.2);margin-right:4px" onclick="openTracking(${c.id})">📍 Track</button>
+        <button class="btn btn-sm" style="background:rgba(220,38,38,0.1);color:#fc8181;border:1px solid rgba(220,38,38,0.2)" onclick="deleteCar(${c.id})">🗑 Delete</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  // Users table
+  document.getElementById('usersCount').textContent = `Customers: ${adminUsers.length}`;
+  document.getElementById('usersTbody').innerHTML = adminUsers.map(u => `<tr>
+    <td>#${u.id}</td>
+    <td><strong>${u.name}</strong></td>
+    <td>${u.email}</td>
+    <td>${u.phone||'–'}</td>
+    <td>${u.city||'–'}</td>
+    <td><span class="status-badge ${u.role==='ADMIN'?'status-confirmed':'status-pending'}">${u.role}</span></td>
+  </tr>`).join('');
+
+  // Bookings table
+  document.getElementById('bookingsCount').textContent = `Bookings: ${adminBookings.length}`;
+  document.getElementById('allBookingsTbody').innerHTML = adminBookings.map(b => {
+    const sc = `status-${(b.status||'pending').toLowerCase()}`;
+    return `<tr>
+      <td>#${b.id}</td>
+      <td>${b.user?.name||'–'}</td>
+      <td>${b.car?.brand||''} ${b.car?.model||''}</td>
+      <td>${b.pickupCity}</td>
+      <td>${b.returnDate}</td>
+      <td style="color:var(--primary);font-weight:600">₹${parseFloat(b.totalCost||0).toLocaleString('en-IN')}</td>
+      <td><span class="status-badge ${sc}">${b.status}</span></td>
+      <td>
+        <select onchange="updateStatus(${b.id},this.value)" style="background:var(--bg-dark);border:1px solid var(--border);border-radius:6px;color:var(--text-primary);padding:4px 8px;font-size:0.8rem">
+          <option>–</option><option value="CONFIRMED">Confirm</option>
+          <option value="ACTIVE">Active</option><option value="COMPLETED">Complete</option>
+          <option value="CANCELLED">Cancel</option>
+        </select>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function handleAddCar(e) {
+  e.preventDefault();
+  const btn = document.getElementById('addCarBtn');
+  btn.innerHTML='⏳ Adding...'; btn.disabled=true;
+  const payload = {
+    brand:document.getElementById('cBrand').value, model:document.getElementById('cModel').value,
+    year:parseInt(document.getElementById('cYear').value), seats:parseInt(document.getElementById('cSeats').value),
+    type:document.getElementById('cType').value, fuelType:document.getElementById('cFuel').value,
+    transmission:document.getElementById('cTransmission').value,
+    pricePerDay:parseFloat(document.getElementById('cPrice').value),
+    city:document.getElementById('cCity').value, available:true,
+    imageUrl:document.getElementById('cImage').value, description:document.getElementById('cDesc').value,
+    registrationNumber:document.getElementById('cReg').value
+  };
+  try {
+    await apiFetch('/api/admin/cars','POST',payload);
+    showToast('✅ Car added successfully!','success');
+    document.getElementById('addCarForm').reset();
+    await loadCars(); renderOverview(); showSection('cars');
+  } catch(err) {
+    showToast('❌ Failed: '+err.message,'error');
+  }
+  btn.innerHTML='Add Vehicle to Fleet'; btn.disabled=false;
+}
+
+async function deleteCar(id) {
+  if (!confirm('Delete this vehicle from the fleet?')) return;
+  try {
+    await apiFetch(`/api/admin/cars/${id}`,'DELETE');
+    showToast('Vehicle deleted','success');
+    await loadCars(); renderOverview();
+  } catch(e) { showToast('Delete failed: '+e.message,'error'); }
+}
+
+async function updateStatus(id, status) {
+  if (!status || status==='–') return;
+  try {
+    await apiFetch(`/api/admin/bookings/${id}/status?status=${status}`,'PUT');
+    showToast('Status updated to '+status,'success');
+    await loadBookings(); renderOverview();
+  } catch(e) { showToast('Update failed','error'); }
+}
+
+function showSection(section) {
+  ['overview','cars','addcar','bookings','users'].forEach(s => {
+    document.getElementById(`section-${s}`).style.display = 'none';
+    const l = document.getElementById(`link-${s}`);
+    if (l) l.classList.remove('active');
+  });
+  document.getElementById(`section-${section}`).style.display = 'block';
+  const l = document.getElementById(`link-${section}`);
+  if (l) l.classList.add('active');
+}
+
+// ══════ TRACKING MODAL LOGIC ══════
+let trackingCarId = null;
+function openTracking(id) {
+  trackingCarId = id;
+  const car = adminCars.find(c => c.id === id);
+  if (!car) return;
+  document.getElementById('trackingTitle').textContent = `Tracking ${car.brand} ${car.model}`;
+  document.getElementById('trackingSubtitle').textContent = `Reg: ${car.registrationNumber || 'AP-31-BT-1234'} • ${car.city}`;
+  document.getElementById('trackingModal').style.display = 'flex';
+  updateMarker();
+}
+
+function closeTracking() {
+  document.getElementById('trackingModal').style.display = 'none';
+  trackingCarId = null;
+}
+
+function updateMarker() {
+  if (!trackingCarId) return;
+  const demoCars = JSON.parse(localStorage.getItem('demo_cars') || '[]');
+  const car = demoCars.find(c => c.id === trackingCarId) || adminCars.find(c => c.id === trackingCarId);
+  if (!car || !car.lat) return;
+
+  const marker = document.getElementById('carMarker');
+  const latEl = document.getElementById('trackLat');
+  const lngEl = document.getElementById('trackLng');
+  const speedEl = document.getElementById('trackSpeed');
+
+  // Convert lat/lng to pixel percentages (mock mapping)
+  // AP roughly: Lat 12-19, Lng 76-84
+  const top = ((19 - car.lat) / 7) * 100;
+  const left = ((car.lng - 76) / 8) * 100;
+
+  marker.style.top = `${Math.max(10, Math.min(90, top))}%`;
+  marker.style.left = `${Math.max(10, Math.min(90, left))}%`;
+  
+  latEl.textContent = car.lat.toFixed(6);
+  lngEl.textContent = car.lng.toFixed(6);
+  speedEl.textContent = `${(30 + Math.random() * 40).toFixed(0)} km/h`;
+}
+
+// Listen for updates from main.js simulation
+window.addEventListener('carsUpdated', () => {
+    if (trackingCarId) updateMarker();
+});
+
+// ══════ IMAGE AUDIT TRIGGER ══════
+async function triggerImageAudit() {
+  const btn = document.getElementById('audit-btn') || { innerText: '' };
+  const originalText = btn.innerText;
+  btn.innerText = '⏳ Auditing...';
+  btn.disabled = true;
+
+  try {
+    console.log('--- Starting System-Wide Image Audit ---');
+    
+    // 1. Backend Audit (Spring Boot + DB)
+    let backendResult = { fixedCount: 0, totalScanned: 0 };
+    try {
+      backendResult = await apiFetch('/api/admin/audit-images', 'POST');
+      console.log('✅ Backend Audit Complete:', backendResult);
+    } catch (e) {
+      console.warn('Backend audit failed (is the server running?):', e.message);
+    }
+
+    // 2. Frontend Audit (localStorage + DOM)
+    // auditAndFixImages is defined in main.js
+    const frontendResult = await auditAndFixImages({ 
+      placeholder: 'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?q=80&w=2070&auto=format&fit=crop' 
+    });
+    console.log('✅ Frontend Audit Complete:', frontendResult);
+
+    // 3. Final Report
+    const totalLines = [
+      `Audit Complete!`,
+      `----------------`,
+      `DB Scan: ${backendResult.totalScanned || 0} checked, ${backendResult.fixedCount || 0} fixed.`,
+      `Local Scan: ${frontendResult.totalCount || 0} checked, ${frontendResult.fixedCount || 0} fixed.`,
+      `----------------`,
+      `All images are now verified and non-broken.`
+    ];
+    
+    alert(totalLines.join('\n'));
+    
+    // Refresh the table to show any updated images
+    if (typeof loadAdminCars === 'function') loadAdminCars();
+
+  } catch (err) {
+    console.error('Audit failed:', err);
+    alert('Failed to complete audit: ' + err.message);
+  } finally {
+    btn.innerText = '🛠️ Audit Images';
+    btn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>

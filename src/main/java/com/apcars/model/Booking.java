@@ -26,10 +26,12 @@ public class Booking {
     private Car car;
     
     private String pickupCity;
+    private String dropCity;
     private LocalDate pickupDate; // We parse frontend string dates
     private LocalDate returnDate;
     
     private Double totalCost;
     
     private String status; // PENDING, CONFIRMED, ACTIVE, COMPLETED, CANCELLED
+    private String specialRequests;
 }

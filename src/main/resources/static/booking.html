@@ -354,7 +354,6 @@ async function confirmAndPay() {
   try {
     const payload = {
       carId:          parseInt(bookingParams.carId),
-      userId:         user.id,
       pickupCity:     bookingParams.pickupCity,
       dropCity:       bookingParams.dropCity,
       pickupDate:     bookingParams.pickupDate,
@@ -362,20 +361,36 @@ async function confirmAndPay() {
       specialRequests: bookingParams.special || ''
     };
     const booking = await apiFetch('/api/bookings', 'POST', payload);
-    showSuccess(booking);
+    
+    // Process Payment
+    btn.innerHTML = '💳 Processing Payment...';
+    const paymentPayload = {
+      bookingId: booking.id,
+      paymentMethod: selectedPayment.toUpperCase()
+    };
+    const payment = await apiFetch('/api/payments/process', 'POST', paymentPayload);
+    
+    showSuccess(booking, payment);
   } catch(e) {
-    // Demo success if backend not available
-    showSuccess({ id: Math.floor(Math.random() * 9000 + 1000) });
+    showToast('Error: ' + e.message, 'error');
+    btn.innerHTML = '✅ Confirm & Pay ₹' + bookingParams.total.toLocaleString('en-IN');
+    btn.disabled = false;
   }
 }
 
-function showSuccess(booking) {
+function showSuccess(booking, payment) {
   document.getElementById('bookingForm').style.display = 'none';
   document.getElementById('successScreen').style.display = 'block';
-  const id = booking.id || Math.floor(Math.random() * 9000 + 1000);
+  const id = booking.id;
   document.getElementById('confirmId').textContent = `#AP-2026-${String(id).padStart(4,'0')}`;
   document.getElementById('confirmAmt').textContent = `₹${bookingParams.total.toLocaleString('en-IN')}`;
-  showToast('🎉 Booking confirmed! Welcome aboard.', 'success');
+  
+  if (payment && payment.transactionId) {
+    const successMsg = document.querySelector('#successScreen p');
+    successMsg.innerHTML += `<br/><span style="font-size:0.8rem;color:var(--secondary-light)">Transaction ID: ${payment.transactionId}</span>`;
+  }
+  
+  showToast('🎉 Booking confirmed and payment processed!', 'success');
 }
 </script>
 </body>

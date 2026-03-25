@@ -3,7 +3,7 @@
  * Shared utilities, API helpers, auth management, and static demo data
  */
 
-const API_BASE = 'http://localhost:8080';
+const API_BASE = ''; // Set to empty for relative paths in production
 
 // ══════ API FETCH ══════
 async function apiFetch(endpoint, method = 'GET', body = null) {

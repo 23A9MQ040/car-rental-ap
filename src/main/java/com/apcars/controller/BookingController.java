@@ -34,8 +34,10 @@ public class BookingController {
     public static class BookingRequest {
         private Long carId;
         private String pickupCity;
+        private String dropCity;
         private String pickupDate;
         private String returnDate;
+        private String specialRequests;
     }
 
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
@@ -53,8 +55,10 @@ public class BookingController {
         booking.setUser(user);
         booking.setCar(car);
         booking.setPickupCity(req.getPickupCity());
+        booking.setDropCity(req.getDropCity());
         booking.setPickupDate(LocalDate.parse(req.getPickupDate()));
         booking.setReturnDate(LocalDate.parse(req.getReturnDate()));
+        booking.setSpecialRequests(req.getSpecialRequests());
 
         Booking saved = bookingService.createBooking(booking);
 

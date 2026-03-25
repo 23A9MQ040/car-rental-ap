@@ -6,8 +6,342 @@
   <title>AP Car Rentals – Premium Car Rental in Andhra Pradesh</title>
   <meta name="description" content="Book premium cars in Visakhapatnam, Vijayawada, Tirupati, Guntur and across Andhra Pradesh. Best rates, verified vehicles, instant booking."/>
   <link rel="stylesheet" href="css/style.css"/>
+  <style>
+    /* --- CINEMATIC BACKGROUND INTEGRATION --- */
+    :root {
+      --bg-dark: #05000a;
+      --bg-gradient: linear-gradient(180deg, #020005 0%, #0a0015 100%);
+      --neon-primary: #00d4ff;
+      --neon-secondary: #7b00ff;
+      --fire-core: #ffcc00;
+      --fire-mid: #ff8c00;
+      --fire-edge: #ff4500;
+      --brake-glow: #ff2200;
+      --road-base: #0a0a0f;
+    }
+
+    body {
+      background: var(--bg-dark);
+      background-attachment: fixed;
+    }
+
+    /* Cinematic Layer */
+    .animation-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: -1; 
+      background: var(--bg-gradient);
+      overflow: hidden;
+      pointer-events: none; 
+    }
+
+    .fade-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #000;
+      z-index: 10;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.8s ease-in-out;
+    }
+    .blackout .fade-overlay { opacity: 1; }
+
+    canvas#particleCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    .road-layer {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100vw;
+      height: 30vh;
+      background: var(--road-base);
+      border-top: 2px solid rgba(0, 212, 255, 0.3);
+      box-shadow: 0 -20px 50px rgba(0, 212, 255, 0.05);
+      z-index: 0;
+    }
+
+    .lane-lines {
+      position: absolute;
+      top: 40%;
+      left: 0;
+      width: 200vw;
+      height: 6px;
+      background-image: linear-gradient(to right, rgba(255,255,255,0.4) 50%, transparent 50%);
+      background-size: 150px 100%;
+      will-change: transform;
+    }
+
+    .skid-marks {
+      position: absolute;
+      top: 50%;
+      right: calc(100vw - 30%);
+      width: 0;
+      height: 35px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      opacity: 0;
+      transform-origin: right;
+      z-index: 2;
+    }
+
+    .skid-line { height: 8px; width: 100%; background: rgba(0,0,0,0.9); filter: blur(1px); }
+
+    .scene-layer {
+      position: absolute;
+      bottom: 30vh;
+      left: 0;
+      width: 100vw;
+      height: 300px;
+      z-index: 3;
+      perspective: 1000px;
+    }
+
+    .figure { position: absolute; bottom: 10px; transform-style: preserve-3d; transition: left 2.5s linear, opacity 0.5s; }
+    .figure-a { left: 200px; z-index: 4; }
+    .figure-b { left: -100px; z-index: 5; }
+
+    .head { position: absolute; bottom: 90px; left: -10px; width: 20px; height: 25px; background: #110a1c; border-radius: 50%; border: 1px solid rgba(0, 212, 255, 0.4); box-shadow: inset -2px 0 5px rgba(0, 212, 255, 0.2); }
+    .torso { position: absolute; bottom: 40px; left: -15px; width: 30px; height: 50px; background: #0b0712; border-radius: 5px; border-right: 1px solid rgba(0, 212, 255, 0.2); }
+    .limb { position: absolute; width: 10px; height: 30px; background: #0b0712; border-radius: 5px; transform-origin: top center; border-right: 1px solid rgba(0, 212, 255, 0.1); }
+    .arm-l { bottom: 60px; left: -10px; z-index: -1; transition: transform 0.5s; }
+    .arm-r { bottom: 60px; left: 5px; z-index: 1; transition: transform 0.5s; }
+    .leg-l { bottom: 10px; left: -8px; z-index: -1; }
+    .leg-r { bottom: 10px; left: 3px; z-index: 1; }
+
+    .car-key { position: absolute; bottom: -5px; left: 5px; width: 8px; height: 12px; background: #fff; border-radius: 2px; box-shadow: 0 0 10px var(--neon-primary), 0 0 20px var(--neon-primary); opacity: 1; transition: opacity 0.2s; }
+    .figure-b .car-key { opacity: 0; }
+    .scene-1-handoff .figure-a .car-key { opacity: 0; }
+    .scene-1-handoff .figure-b .car-key { opacity: 1; }
+
+    @keyframes walk-arm-l { 0%, 100% { transform: rotate(30deg); } 50% { transform: rotate(-30deg); } }
+    @keyframes walk-arm-r { 0%, 100% { transform: rotate(-30deg); } 50% { transform: rotate(30deg); } }
+    @keyframes walk-leg-l { 0%, 100% { transform: rotate(-25deg); } 50% { transform: rotate(25deg); } }
+    @keyframes walk-leg-r { 0%, 100% { transform: rotate(25deg); } 50% { transform: rotate(-25deg); } }
+
+    .walking .arm-l { animation: walk-arm-l 0.8s infinite linear; }
+    .walking .arm-r { animation: walk-arm-r 0.8s infinite linear; }
+    .walking .leg-l { animation: walk-leg-l 0.8s infinite linear; }
+    .walking .leg-r { animation: walk-leg-r 0.8s infinite linear; }
+
+    .car-container { position: absolute; bottom: -15px; left: 350px; width: 400px; height: 130px; transform-style: preserve-3d; will-change: transform; z-index: 3; }
+    .car-body { position: absolute; bottom: 30px; width: 100%; height: 50px; background: linear-gradient(to bottom, #1a1a24, #0a0a10); border-radius: 20px 70px 20px 10px; box-shadow: inset 0 2px 10px rgba(255,255,255,0.1), 0 5px 15px rgba(0,0,0,0.8); z-index: 2; }
+    .car-underglow { position: absolute; bottom: -5px; left: 5%; width: 90%; height: 5px; background: var(--neon-primary); filter: blur(15px); opacity: 0.6; transition: opacity 0.3s, background 0.3s, filter 0.3s; }
+    .car-roof { position: absolute; bottom: 75px; left: 80px; width: 200px; height: 45px; background: rgba(10, 20, 30, 0.9); border-radius: 40px 60px 0 0; border-top: 1px solid rgba(255,255,255,0.2); border-right: 1px solid rgba(255,255,255,0.1); z-index: 1; }
+
+    .driver { position: absolute; bottom: 0; left: 50px; width: 30px; height: 35px; background: #0b0712; border-radius: 10px 10px 0 0; box-shadow: inset -2px 0 5px rgba(0, 212, 255, 0.2); z-index: 2; opacity: 0; transition: opacity 0.2s; }
+    .driver::after { content: ''; position: absolute; top: -18px; left: 3px; width: 22px; height: 24px; background: #110a1c; border-radius: 50%; border-right: 1px solid rgba(0, 212, 255, 0.4); }
+
+    .window-glass { position: absolute; bottom: 5px; left: 10px; width: 175px; height: 35px; background: rgba(0, 212, 255, 0.15); backdrop-filter: blur(3px); border-radius: 30px 45px 0 0; border: 1px solid rgba(0, 212, 255, 0.3); z-index: 3; overflow: hidden; }
+    .car-door { position: absolute; bottom: 0px; left: 85px; width: 120px; height: 50px; background: linear-gradient(to bottom, #1d1d28, #0e0e15); border: 1px solid rgba(0, 0, 0, 0.8); border-top: 1px solid rgba(255,255,255,0.2); border-radius: 0 0 10px 10px; z-index: 4; transform-origin: right center; transform-style: preserve-3d; box-shadow: inset 2px 0 5px rgba(255,255,255,0.1); }
+
+    @keyframes door-swing { 0% { transform: rotateY(0deg); } 30% { transform: rotateY(65deg); } 70% { transform: rotateY(65deg); } 100% { transform: rotateY(0deg); } }
+
+    .headlight { position: absolute; right: 5px; top: 15px; width: 15px; height: 10px; background: #fff; border-radius: 5px; opacity: 0.2; transition: all 0.3s; }
+    .headlight-beam { position: absolute; right: -300px; top: -30px; width: 300px; height: 100px; background: linear-gradient(to right, rgba(0, 212, 255, 0.5), transparent); clip-path: polygon(0 40%, 100% 0, 100% 100%, 0 60%); opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+    .taillight { position: absolute; left: -2px; top: 10px; width: 12px; height: 18px; background: #550000; border-radius: 3px; transition: all 0.3s; }
+    .exhaust { position: absolute; left: -8px; bottom: 5px; width: 15px; height: 8px; background: #111; border-radius: 3px; border: 1px solid #000; }
+    .suspension { position: absolute; bottom: 15px; width: 70px; height: 35px; border-radius: 35px 35px 0 0; background: #030305; box-shadow: inset 0 5px 15px rgba(0,0,0,0.9); z-index: 1; }
+    .suspension.front { right: 40px; }
+    .suspension.rear { left: 40px; }
+    .wheel { position: absolute; bottom: -5px; width: 60px; height: 60px; border-radius: 50%; background: #0a0a0a; border: 7px solid #1a1a1a; box-shadow: 0 5px 15px rgba(0,0,0,0.9), inset 0 0 8px #000; display: flex; align-items: center; justify-content: center; will-change: transform; z-index: 4; }
+    .wheel.front { right: 45px; }
+    .wheel.rear { left: 45px; }
+    .wheel-rim { width: 36px; height: 36px; border-radius: 50%; background: radial-gradient(circle, #555 20%, #111 80%); border: 3px dashed #777; }
+    .brake-disc { position: absolute; width: 32px; height: 32px; border-radius: 50%; background: transparent; border: 4px solid transparent; transition: border-color 0.2s, box-shadow 0.2s; }
+
+    /* Scene Transitions */
+    .headlight { opacity: 0.5; background: #fff; box-shadow: 0 0 10px 2px var(--neon-primary); }
+    .taillight { background: #aa0000; box-shadow: 0 0 5px #aa0000; }
+    .car-container { animation: engine-idle 0.5s infinite; }
+
+    .scene-1 .figure-b { left: 160px; }
+    .scene-1-handoff .figure-a .arm-l { transform: rotate(45deg); }
+    .scene-1-handoff .figure-b .arm-r { transform: rotate(-45deg); }
+    .scene-2 .figure-b { left: 420px; }
+    .scene-2 .figure-a { opacity: 0; }
+    .scene-3 .figure-b { left: 420px; opacity: 0; transition: opacity 0.1s 1.2s; }
+    .scene-3 .figure-a { opacity: 0; }
+    .scene-3 .car-door { animation: door-swing 2.5s forwards ease-in-out; }
+    .scene-3 .driver { opacity: 1; transition: opacity 0.1s 1.2s; }
+    .scene-3 .headlight { opacity: 0.8; box-shadow: 0 0 15px 4px var(--neon-primary); }
+    .scene-4 .figure-b, .scene-4 .figure-a { opacity: 0; }
+    .scene-4 .driver { opacity: 1; }
+    .scene-4 .headlight { opacity: 1; box-shadow: 0 0 20px 5px var(--neon-primary); }
+    .scene-4 .headlight-beam { opacity: 1; }
+    .scene-4 .taillight { background: #ff2200; box-shadow: 0 0 10px #ff2200; }
+    .scene-4 .car-container { animation: launch-tilt 1s forwards; }
+    .scene-4 .wheel { animation: spin 0.4s infinite linear; filter: blur(1px); }
+    .scene-4 .lane-lines { animation: road-scroll 0.8s infinite linear; }
+    .scene-5 .figure-b, .scene-5 .figure-a { opacity: 0; }
+    .scene-5 .driver { opacity: 1; }
+    .scene-5 .headlight { opacity: 1; box-shadow: 0 0 25px 8px var(--neon-primary); }
+    .scene-5 .headlight-beam { opacity: 1; }
+    .scene-5 .taillight { background: #ff2200; box-shadow: 0 0 10px #ff2200; }
+    .scene-5 .car-container { transform: rotate(-1deg); }
+    .scene-5 .wheel { animation: spin 0.15s infinite linear; filter: blur(2px); }
+    .scene-5 .lane-lines { animation: road-scroll 0.3s infinite linear; }
+    .scene-5 .road-layer { border-top: 2px solid var(--fire-mid); box-shadow: 0 -30px 60px rgba(255, 69, 0, 0.2); }
+    .scene-6 .figure-b, .scene-6 .figure-a { opacity: 0; }
+    .scene-6 .driver { opacity: 1; }
+    .scene-6 .headlight { opacity: 1; box-shadow: 0 0 30px 10px var(--neon-primary); }
+    .scene-6 .headlight-beam { opacity: 1; }
+    .scene-6 .taillight { background: #ff2200; box-shadow: 0 0 10px #ff2200; }
+    .scene-6 .car-container { animation: surge-forward 2s forwards; }
+    .scene-6 .wheel { animation: spin 0.08s infinite linear; filter: blur(3px); }
+    .scene-6 .lane-lines { animation: road-scroll 0.15s infinite linear; }
+    .scene-6.animation-container { animation: screen-shake 0.1s infinite; }
+    .scene-7 .figure-b, .scene-7 .figure-a { opacity: 0; }
+    .scene-7 .driver { opacity: 1; }
+    .scene-7 .headlight { opacity: 1; box-shadow: 0 0 25px 8px var(--neon-primary); }
+    .scene-7 .headlight-beam { opacity: 1; }
+    .scene-7 .taillight { background: #ff2200; box-shadow: 0 0 10px #ff2200; }
+    .scene-7 .wheel { animation: spin 0.15s infinite linear; filter: blur(2px); }
+    .scene-7 .lane-lines { animation: road-scroll 0.3s infinite linear; }
+    .scene-7 .car-container { animation: bump-front 0.8s cubic-bezier(0.25, 1.5, 0.5, 1); transform: translateX(30px) rotate(-1deg); }
+    .scene-8 .figure-b, .scene-8 .figure-a { opacity: 0; }
+    .scene-8 .driver { opacity: 1; }
+    .scene-8 .headlight { opacity: 1; box-shadow: 0 0 25px 8px var(--neon-primary); }
+    .scene-8 .headlight-beam { opacity: 1; }
+    .scene-8 .taillight { background: #ff2200; box-shadow: 0 0 10px #ff2200; }
+    .scene-8 .wheel { animation: spin 0.15s infinite linear; filter: blur(2px); }
+    .scene-8 .lane-lines { animation: road-scroll 0.3s infinite linear; }
+    .scene-8 .car-container { animation: bump-rear 0.8s cubic-bezier(0.25, 1.5, 0.5, 1); transform: translateX(30px) rotate(-1deg); }
+    .scene-9 .figure-b, .scene-9 .figure-a { opacity: 0; }
+    .scene-9 .driver { opacity: 1; }
+    .scene-9 .headlight { opacity: 1; box-shadow: 0 0 20px 5px var(--neon-primary); }
+    .scene-9 .headlight-beam { opacity: 1; }
+    .scene-9 .taillight { background: #ffaa00; box-shadow: 0 0 25px #ffaa00; }
+    .scene-9 .car-container { animation: brake-dive 2.5s forwards cubic-bezier(0.1, 1, 0.3, 1); }
+    .scene-9 .wheel { animation: spin 1.5s forwards cubic-bezier(0.1, 1, 0.3, 1); }
+    .scene-9 .lane-lines { animation: road-scroll-stop 2s forwards cubic-bezier(0.1, 1, 0.3, 1); }
+    .scene-9 .brake-disc { border-color: var(--brake-glow); box-shadow: 0 0 15px var(--brake-glow); }
+    .scene-9 .skid-marks { opacity: 1; width: 400px; transition: width 1.5s linear; }
+    .scene-10 .figure-b, .scene-10 .figure-a { opacity: 0; }
+    .scene-10 .driver { opacity: 1; }
+    .scene-10 .headlight { opacity: 1; box-shadow: 0 0 30px 10px var(--neon-primary); }
+    .scene-10 .headlight-beam { opacity: 1; }
+    .scene-10 .taillight { background: #ff2200; box-shadow: 0 0 15px #ff2200; }
+    .scene-10 .car-container { animation: drive-off 2s forwards cubic-bezier(0.5, 0, 1, 1); }
+    .scene-10 .wheel { animation: spin 0.1s infinite linear; filter: blur(3px); }
+    .scene-10 .lane-lines { animation: road-scroll 0.2s infinite linear; }
+    .scene-10 .car-underglow { background: #fff; filter: blur(25px); opacity: 1; }
+
+    @keyframes engine-idle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-0.5px); } }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+    @keyframes road-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-150px); } }
+    @keyframes road-scroll-stop { 0% { transform: translateX(0); } 100% { transform: translateX(-400px); } }
+    @keyframes launch-tilt { 0% { transform: rotate(0deg); } 100% { transform: rotate(-1.5deg); } }
+    @keyframes surge-forward { 0% { transform: translateX(0) rotate(-1deg); } 100% { transform: translateX(40px) rotate(-2deg); } }
+    @keyframes screen-shake { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(-2px, 1px); } 50% { transform: translate(2px, -1px); } 75% { transform: translate(1px, 2px); } }
+    @keyframes bump-front { 0% { transform: translateX(40px) rotate(-1deg); } 30% { transform: translateX(40px) translateY(12px) rotate(4deg); } 100% { transform: translateX(40px) translateY(0) rotate(-1deg); } }
+    @keyframes bump-rear { 0% { transform: translateX(40px) rotate(-1deg); } 30% { transform: translateX(40px) translateY(-8px) rotate(-5deg); } 100% { transform: translateX(40px) translateY(0) rotate(-1deg); } }
+    @keyframes brake-dive { 0% { transform: translateX(40px) rotate(0deg); } 15% { transform: translateX(50px) translateY(8px) rotate(5deg); } 80% { transform: translateX(0) translateY(0) rotate(-1deg); } 100% { transform: translateX(0) translateY(0) rotate(0deg); } }
+    @keyframes drive-off { 0% { transform: translateX(0) rotate(0deg); } 15% { transform: translateX(-10px) rotate(1deg); } 100% { transform: translateX(2000px) rotate(-2deg); } }
+
+    /* LAYERING FOR EXISTING CONTENT */
+    nav.navbar, section, footer {
+      position: relative;
+      z-index: 10;
+    }
+    .hero {
+      background: transparent !important; 
+    }
+    .hero-bg, .hero-pattern {
+      display: none; 
+    }
+  </style>
 </head>
+
 <body>
+
+<div class="animation-container" id="animContainer">
+    <div class="fade-overlay"></div>
+    <canvas id="particleCanvas"></canvas>
+    
+    <div class="road-layer">
+        <div class="lane-lines"></div>
+        <div class="skid-marks">
+            <div class="skid-line"></div>
+            <div class="skid-line"></div>
+        </div>
+    </div>
+
+    <div class="scene-layer">
+        
+        <!-- Agent Figure A -->
+        <div class="figure figure-a">
+            <div class="head"></div>
+            <div class="torso"></div>
+            <div class="limb arm-l">
+                <div class="car-key"></div>
+            </div>
+            <div class="limb arm-r"></div>
+            <div class="limb leg-l"></div>
+            <div class="limb leg-r"></div>
+        </div>
+
+        <!-- Customer Figure B -->
+        <div class="figure figure-b walking">
+            <div class="head"></div>
+            <div class="torso"></div>
+            <div class="limb arm-l"></div>
+            <div class="limb arm-r">
+                <div class="car-key"></div>
+            </div>
+            <div class="limb leg-l"></div>
+            <div class="limb leg-r"></div>
+        </div>
+
+        <!-- The Car -->
+        <div class="car-container" id="mainCar">
+            <div class="car-underglow"></div>
+            
+            <div class="suspension rear"></div>
+            <div class="suspension front"></div>
+            
+            <div class="wheel rear">
+                <div class="brake-disc"></div>
+                <div class="wheel-rim"></div>
+            </div>
+            <div class="wheel front">
+                <div class="brake-disc"></div>
+                <div class="wheel-rim"></div>
+            </div>
+
+            <div class="car-body">
+                <div class="taillight"></div>
+                <div class="exhaust"></div>
+                <div class="headlight"></div>
+                <div class="headlight-beam"></div>
+                
+                <!-- Car door opens out -->
+                <div class="car-door"></div>
+            </div>
+            
+            <div class="car-roof"></div>
+            
+            <div class="window-glass">
+                <!-- Driver Silhouette inside -->
+                <div class="driver"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 <!-- ══════ NAVBAR ══════ -->
 <nav class="navbar">
@@ -366,6 +700,213 @@
 <!-- Toast -->
 <div class="toast-container" id="toastContainer"></div>
 
+<script>
+/* =========================================
+   CINEMATIC PARTICLE ENGINE
+   ========================================= */
+(function() {
+    const canvas = document.getElementById('particleCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d', { alpha: true });
+    
+    let width, height;
+    function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    const particles = [];
+
+    function getCarPos() {
+        const carEl = document.getElementById('mainCar');
+        if (!carEl) return { exhaustX:0, exhaustY:0, rearWheelX:0, rearWheelY:0, frontWheelX:0, frontWheelY:0, handoffX:0, handoffY:0 };
+        const rect = carEl.getBoundingClientRect();
+        return {
+            exhaustX: rect.left,
+            exhaustY: rect.bottom - 25,
+            rearWheelX: rect.left + 75,
+            rearWheelY: rect.bottom - 10,
+            frontWheelX: rect.right - 75,
+            frontWheelY: rect.bottom - 10,
+            handoffX: (width/2) - 100,
+            handoffY: rect.bottom - 70
+        };
+    }
+
+    class Particle {
+        constructor(x, y, vx, vy, life, color, size, type) {
+            this.x = x; this.y = y;
+            this.vx = vx; this.vy = vy;
+            this.life = life; this.maxLife = life;
+            this.color = color; this.size = size;
+            this.type = type;
+            this.alpha = 1;
+        }
+        update() {
+            this.x += this.vx;
+            this.y += this.vy;
+            this.life--;
+            this.alpha = Math.max(0, this.life / this.maxLife);
+            
+            if (this.type === 'smoke') { this.size += 0.8; this.vx *= 0.98; }
+            else if (this.type === 'fire') { this.vy -= 0.15; this.size *= 0.92; }
+            else if (this.type === 'spark') { this.vy += 0.25; this.vx *= 0.95; }
+            else if (this.type === 'speed') { this.vx *= 1.05; }
+        }
+        draw(ctx) {
+            ctx.save();
+            ctx.globalAlpha = this.alpha;
+            ctx.fillStyle = this.color;
+            if (this.type === 'speed') {
+                ctx.fillRect(this.x, this.y, this.size * 15, this.size / 2);
+            } else {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                if (this.type === 'spark' || this.type === 'fire') {
+                    ctx.shadowBlur = 12;
+                    ctx.shadowColor = this.color;
+                    ctx.fill();
+                }
+            }
+            ctx.restore();
+        }
+    }
+
+    let activeBurst = null;
+    class Burst {
+        constructor(x, y, color) {
+            this.x = x; this.y = y; this.color = color;
+            this.radius = 1; this.life = 40; this.maxLife = 40;
+        }
+        update() { this.radius += 12; this.life--; }
+        draw(ctx) {
+            ctx.save();
+            ctx.globalAlpha = Math.max(0, this.life / this.maxLife);
+            ctx.strokeStyle = this.color;
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+        }
+    }
+
+    const pState = {
+        smokePuff: false, fire: false, speedLines: false,
+        sparksFront: false, sparksRear: false, heavySmoke: false
+    };
+
+    function emitParticles() {
+        const pos = getCarPos();
+        if (pos.exhaustX > width + 200) return;
+
+        if (pState.smokePuff && Math.random() > 0.4) {
+            particles.push(new Particle(pos.exhaustX, pos.exhaustY, -2 - Math.random()*2, -0.5 - Math.random(), 50, 'rgba(200,200,200,0.4)', 6 + Math.random()*6, 'smoke'));
+        }
+        if (pState.fire) {
+            for(let i=0; i<4; i++) {
+                const colors = ['#ff4500', '#ff8c00', '#ffcc00'];
+                const color = colors[Math.floor(Math.random()*colors.length)];
+                particles.push(new Particle(pos.rearWheelX - 20, pos.rearWheelY, -6 - Math.random()*4, -Math.random()*2, 25 + Math.random()*15, color, 4 + Math.random()*5, 'fire'));
+            }
+        }
+        if (pState.speedLines) {
+            for(let i=0; i<3; i++) {
+                const y = height * 0.2 + Math.random() * (height * 0.6);
+                particles.push(new Particle(width + 50, y, -25 - Math.random()*15, 0, 100, '#00d4ff', 1 + Math.random()*2, 'speed'));
+            }
+        }
+        if (pState.sparksFront) {
+            for(let i=0; i<6; i++) {
+                particles.push(new Particle(pos.frontWheelX, pos.frontWheelY + 15, -8 + Math.random()*4, -3 - Math.random()*6, 25, '#ffffff', 1.5 + Math.random()*2, 'spark'));
+            }
+        }
+        if (pState.sparksRear) {
+            for(let i=0; i<6; i++) {
+                particles.push(new Particle(pos.rearWheelX, pos.rearWheelY + 15, -8 + Math.random()*4, -3 - Math.random()*6, 25, '#ffffff', 1.5 + Math.random()*2, 'spark'));
+            }
+        }
+        if (pState.heavySmoke) {
+            particles.push(new Particle(pos.frontWheelX, pos.frontWheelY, -5 - Math.random()*5, -1 - Math.random()*3, 70, 'rgba(230,230,230,0.2)', 15 + Math.random()*20, 'smoke'));
+            particles.push(new Particle(pos.rearWheelX, pos.rearWheelY, -5 - Math.random()*5, -1 - Math.random()*3, 70, 'rgba(230,230,230,0.2)', 15 + Math.random()*20, 'smoke'));
+        }
+    }
+
+    function loop() {
+        ctx.clearRect(0, 0, width, height);
+        emitParticles();
+        for (let i = particles.length - 1; i >= 0; i--) {
+            const p = particles[i]; p.update(); p.draw(ctx);
+            if (p.life <= 0) particles.splice(i, 1);
+        }
+        if (activeBurst) {
+            activeBurst.update(); activeBurst.draw(ctx);
+            if (activeBurst.life <= 0) activeBurst = null;
+        }
+        requestAnimationFrame(loop);
+    }
+    loop();
+
+    /* --- SCENE DIRECTOR --- */
+    const container = document.getElementById('animContainer');
+    const figureB = document.querySelector('.figure-b');
+    
+    const scenes = [
+        { id: 1, duration: 2500, action: () => {
+            figureB.classList.add('walking');
+            setTimeout(() => {
+                container.classList.add('scene-1-handoff');
+                figureB.classList.remove('walking');
+                const pos = getCarPos();
+                activeBurst = new Burst(pos.handoffX, pos.handoffY, '#00d4ff');
+            }, 2000);
+        }},
+        { id: 2, duration: 2500, action: () => { figureB.classList.add('walking'); }},
+        { id: 3, duration: 3000, action: () => {
+            figureB.classList.remove('walking');
+            setTimeout(() => { pState.smokePuff = true; }, 2200);
+            setTimeout(() => { pState.smokePuff = false; }, 2800);
+        }},
+        { id: 4, duration: 2000, action: () => {} },
+        { id: 5, duration: 2000, action: () => { pState.fire = true; }},
+        { id: 6, duration: 2000, action: () => { pState.speedLines = true; }},
+        { id: 7, duration: 800, action: () => { pState.sparksFront = true; setTimeout(() => { pState.sparksFront = false; }, 300); }},
+        { id: 8, duration: 1200, action: () => { pState.sparksRear = true; setTimeout(() => { pState.sparksRear = false; }, 300); }},
+        { id: 9, duration: 2500, action: () => { pState.fire = false; pState.speedLines = false; pState.heavySmoke = true; }},
+        { id: 10, duration: 2500, action: () => {
+            pState.heavySmoke = false;
+            setTimeout(() => { container.classList.add('blackout'); }, 1500);
+        }}
+    ];
+
+    let currentSceneIndex = 0;
+    function playTimeline() {
+        const isBlackout = container.classList.contains('blackout');
+        container.className = 'animation-container';
+        if (isBlackout) container.classList.add('blackout');
+        
+        const scene = scenes[currentSceneIndex];
+        if (scene.id === 1) {
+            setTimeout(() => {
+                container.classList.remove('blackout');
+                container.classList.add(`scene-${scene.id}`);
+                scene.action();
+            }, 50);
+        } else {
+            container.classList.add(`scene-${scene.id}`);
+            scene.action();
+        }
+        currentSceneIndex++;
+        if (currentSceneIndex >= scenes.length) currentSceneIndex = 0;
+        setTimeout(playTimeline, scene.duration);
+    }
+    setTimeout(playTimeline, 500);
+})();
+</script>
+
 <script src="js/main.js"></script>
 <script>
 // ── Page Init ──
@@ -380,6 +921,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function renderFeaturedCars() {
   const grid = document.getElementById('featuredCars');
+  if (!grid) return;
   grid.innerHTML = '<p style="color:var(--text-muted);text-align:center;grid-column:1/-1;padding:40px">Loading featured cars...</p>';
   try {
     const cars = await apiFetch('/api/cars');
@@ -387,7 +929,7 @@ async function renderFeaturedCars() {
     grid.innerHTML = featured.map(car => createCarCard(car)).join('');
   } catch (e) {
     // Fallback static data for demo
-    grid.innerHTML = getStaticCars().slice(0, 6).map(car => createCarCard(car)).join('');
+    grid.innerHTML = (window.getStaticCars ? getStaticCars() : []).slice(0, 6).map(car => createCarCard(car)).join('');
   }
 }
 
@@ -402,3 +944,5 @@ function filterCars() {
 </script>
 </body>
 </html>
+
+

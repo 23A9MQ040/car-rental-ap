@@ -4,6 +4,7 @@ import javax.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
 @Table(name = "cars")
@@ -22,7 +23,8 @@ public class Car {
     @Column(nullable = false)
     private String model;
     
-    private Integer manufactureYear; // mapped from 'year' in frontend
+    @JsonProperty("year")
+    private Integer manufactureYear;
     
     private Integer seats;
     

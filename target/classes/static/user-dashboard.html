@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Dashboard – AP Car Rentals</title>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+<nav class="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <div class="logo-icon">🚗</div>
+      <div class="logo-text">AP <span>Cars</span></div>
+    </a>
+    <div class="nav-actions">
+      <span id="welcomeUser" style="color:var(--text-muted);font-size:0.88rem"></span>
+      <a href="browse-cars.html" class="btn btn-secondary btn-sm">Browse Cars</a>
+      <button onclick="logout()" class="btn btn-sm" style="background:rgba(220,38,38,0.15);color:#fc8181;border:1px solid rgba(220,38,38,0.3)">Logout</button>
+    </div>
+  </div>
+</nav>
+
+<div class="dashboard-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-menu">
+      <p class="sidebar-section-label">Main</p>
+      <div class="sidebar-link active" onclick="showSection('overview')" id="link-overview">
+        <span>📊</span> Overview
+      </div>
+      <div class="sidebar-link" onclick="showSection('bookings')" id="link-bookings">
+        <span>📋</span> My Bookings
+      </div>
+      <div class="sidebar-link" onclick="showSection('browse')" id="link-browse">
+        <span>🚗</span> Browse Cars
+      </div>
+      <p class="sidebar-section-label">Account</p>
+      <div class="sidebar-link" onclick="showSection('profile')" id="link-profile">
+        <span>👤</span> My Profile
+      </div>
+      <div class="sidebar-link" onclick="logout()">
+        <span>🚪</span> Logout
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="dashboard-main">
+
+    <!-- Overview -->
+    <div id="section-overview">
+      <div class="page-header">
+        <h1 id="dashTitle">My Dashboard</h1>
+        <p>Welcome to your AP Cars rental portal</p>
+      </div>
+      <div class="stat-cards" id="overviewStats">
+        <div class="stat-card">
+          <div class="stat-card-label">Total Bookings</div>
+          <div class="stat-card-value" id="totalBookings">–</div>
+          <div class="stat-card-sub">All time</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Active Rentals</div>
+          <div class="stat-card-value" id="activeBookings" style="color:var(--secondary-light)">–</div>
+          <div class="stat-card-sub">Currently rented</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Total Spent</div>
+          <div class="stat-card-value" id="totalSpent" style="color:var(--primary)">–</div>
+          <div class="stat-card-sub">In ₹ INR</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Cancelled</div>
+          <div class="stat-card-value" id="cancelledCount" style="color:#fc8181">–</div>
+          <div class="stat-card-sub">Cancelled bookings</div>
+        </div>
+      </div>
+      <div class="data-table-wrap">
+        <div class="table-header">
+          <h3>Recent Bookings</h3>
+          <a href="#" onclick="showSection('bookings')" style="color:var(--primary);font-size:0.85rem">View All →</a>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="data-table" id="recentBookingsTable">
+            <thead>
+              <tr>
+                <th>ID</th><th>Car</th><th>City</th><th>Dates</th><th>Cost</th><th>Status</th><th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="recentBookingsTbody">
+              <tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:32px">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bookings -->
+    <div id="section-bookings" style="display:none">
+      <div class="page-header">
+        <h1>My Bookings</h1>
+        <p>All your car rental reservations</p>
+      </div>
+      <div style="overflow-x:auto" class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr><th>ID</th><th>Car</th><th>Pickup City</th><th>Drop City</th><th>Pickup Date</th><th>Return Date</th><th>Total Cost</th><th>Status</th><th>Action</th></tr>
+          </thead>
+          <tbody id="allBookingsTbody">
+            <tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:32px">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Browse (redirect shortcut) -->
+    <div id="section-browse" style="display:none">
+      <div class="page-header">
+        <h1>Browse Cars</h1>
+        <p>Find your next rental on their full listing page</p>
+      </div>
+      <div style="text-align:center;padding:60px">
+        <div style="font-size:3.5rem;margin-bottom:16px">🚗</div>
+        <p style="color:var(--text-muted);margin-bottom:24px">Head to our full car browse page to search, filter, and book.</p>
+        <a href="browse-cars.html" class="btn btn-primary btn-lg">Open Browse Cars →</a>
+      </div>
+    </div>
+
+    <!-- Profile -->
+    <div id="section-profile" style="display:none">
+      <div class="page-header">
+        <h1>My Profile</h1>
+        <p>Your personal account information</p>
+      </div>
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:32px;max-width:540px">
+        <div style="display:flex;align-items:center;gap:20px;margin-bottom:28px">
+          <div class="avatar" style="width:64px;height:64px;font-size:1.5rem" id="profileAvatar">U</div>
+          <div>
+            <div style="font-weight:700;font-size:1.1rem" id="profileName">–</div>
+            <div style="color:var(--text-muted);font-size:0.85rem" id="profileEmail">–</div>
+            <div id="profileRole" class="badge badge-saffron" style="margin-top:6px;font-size:0.7rem">USER</div>
+          </div>
+        </div>
+        <div style="display:grid;gap:12px">
+          <div style="display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)">
+            <span style="color:var(--text-muted)">City</span>
+            <span id="profileCity">–</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:12px 0">
+            <span style="color:var(--text-muted)">Member Since</span>
+            <span>March 2026</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Live Tracking Modal -->
+<div id="trackingModal" class="modal">
+  <div class="modal-content" style="max-width:800px;background:var(--bg-dark);padding:0;overflow:hidden">
+    <div class="modal-header" style="padding:24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <h2 id="trackingTitle">Live Tracking</h2>
+        <p id="trackingSubtitle" style="font-size:0.9rem;color:var(--text-muted)">Real-time telemetry from your rented vehicle</p>
+      </div>
+      <button class="btn-close" onclick="closeTracking()">✕</button>
+    </div>
+    <div class="modal-body" style="padding:0;position:relative;height:450px;background:#0f172a">
+      <div id="mockMap" style="width:100%;height:100%;background-image:radial-gradient(var(--border) 1px, transparent 1px);background-size:30px 30px;position:relative">
+        <div id="carMarker" style="position:absolute;transition:all 3s linear;width:40px;height:40px;background:var(--primary);border-radius:50%;display:flex;justify-content:center;align-items:center;box-shadow:0 0 20px var(--primary);z-index:10">
+          <span style="font-size:1.2rem">🚗</span>
+          <div style="position:absolute;top:-40px;background:var(--bg-card);padding:4px 10px;border-radius:4px;font-size:0.75rem;white-space:nowrap;border:1px solid var(--primary);color:var(--text-primary)" id="markerLabel">
+            On the way...
+          </div>
+        </div>
+        <div style="position:absolute;bottom:20px;left:20px;background:rgba(0,0,0,0.6);padding:10px;border-radius:8px;font-size:0.7rem;font-family:monospace;color:var(--secondary-light);border:1px solid rgba(255,255,255,0.1)">
+          Lat: <span id="trackLat">0.0000</span><br/>
+          Lng: <span id="trackLng">0.0000</span><br/>
+          Speed: <span id="trackSpeed">45 km/h</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer" style="padding:16px 24px;background:var(--bg-card);border-top:1px solid var(--border);display:flex;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="closeTracking()">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+<script src="js/main.js"></script>
+<script>
+let userBookings = [];
+
+document.addEventListener('DOMContentLoaded', async () => {
+  const user = JSON.parse(localStorage.getItem('carRentalUser') || 'null');
+  if (!user) { window.location.href='login.html'; return; }
+  if (user.role === 'ADMIN') { window.location.href='admin-dashboard.html'; return; }
+  document.getElementById('welcomeUser').textContent = '👋 ' + user.name;
+  document.getElementById('dashTitle').textContent = 'Welcome, ' + user.name.split(' ')[0] + '!';
+  document.getElementById('profileName').textContent = user.name;
+  document.getElementById('profileEmail').textContent = user.email;
+  document.getElementById('profileAvatar').textContent = user.name[0].toUpperCase();
+  document.getElementById('profileRole').textContent = user.role;
+  await loadBookings(user.id);
+});
+
+async function loadBookings(userId) {
+  try {
+    userBookings = await apiFetch(`/api/bookings/user/${userId}`);
+  } catch(e) { userBookings = []; }
+  renderOverviewStats();
+  renderRecentBookings();
+  renderAllBookings();
+}
+
+function renderOverviewStats() {
+  const total = userBookings.length;
+  const active = userBookings.filter(b => b.status === 'CONFIRMED' || b.status === 'ACTIVE').length;
+  const cancelled = userBookings.filter(b => b.status === 'CANCELLED').length;
+  const spent = userBookings.filter(b => b.status !== 'CANCELLED').reduce((s,b) => s + parseFloat(b.totalCost||0), 0);
+  document.getElementById('totalBookings').textContent = total;
+  document.getElementById('activeBookings').textContent = active;
+  document.getElementById('cancelledCount').textContent = cancelled;
+  document.getElementById('totalSpent').textContent = '₹' + spent.toLocaleString('en-IN');
+}
+
+function renderRecentBookings() {
+  const tbody = document.getElementById('recentBookingsTbody');
+  const recent = userBookings.slice(0,5);
+  if (!recent.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:32px">No bookings yet. <a href="browse-cars.html" style="color:var(--primary)">Browse cars →</a></td></tr>'; return; }
+  tbody.innerHTML = recent.map(b => bookingRow(b, 7)).join('');
+}
+
+function renderAllBookings() {
+  const tbody = document.getElementById('allBookingsTbody');
+  if (!userBookings.length) { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:32px">No bookings yet. <a href="browse-cars.html" style="color:var(--primary)">Browse cars →</a></td></tr>'; return; }
+  tbody.innerHTML = userBookings.map(b => bookingRow(b, 9)).join('');
+}
+
+function bookingRow(b, cols) {
+  const carName = b.car ? `${b.car.brand} ${b.car.model}` : 'Car';
+  const statusClass = `status-${(b.status||'pending').toLowerCase()}`;
+  const canCancel = b.status === 'PENDING' || b.status === 'CONFIRMED';
+  if (cols === 7) {
+    return `<tr>
+      <td>#${b.id}</td>
+      <td>${carName}</td>
+      <td>📍 ${b.pickupCity}</td>
+      <td>${b.pickupDate} → ${b.returnDate}</td>
+      <td style="color:var(--primary);font-weight:600">₹${parseFloat(b.totalCost).toLocaleString('en-IN')}</td>
+      <td><span class="status-badge ${statusClass}">${b.status}</span></td>
+      <td>
+        ${(b.status==='ACTIVE' || b.status==='CONFIRMED') ? `<button class="btn btn-sm" style="background:rgba(59,130,246,0.1);color:var(--secondary-light);border:1px solid rgba(59,130,246,0.2);margin-right:4px" onclick="openTracking(${b.car?.id})">📍 Track</button>` : ''}
+        ${canCancel ? `<button class="btn btn-sm" style="background:rgba(220,38,38,0.15);color:#fc8181;border:1px solid rgba(220,38,38,0.3)" onclick="cancelBooking(${b.id})">Cancel</button>` : ''}
+        ${(!canCancel && b.status!=='ACTIVE' && b.status!=='CONFIRMED') ? '–' : ''}
+      </td>
+    </tr>`;
+  }
+  return `<tr>
+    <td>#${b.id}</td>
+    <td>${carName}</td>
+    <td>${b.pickupCity}</td>
+    <td>${b.dropCity}</td>
+    <td>${b.pickupDate}</td>
+    <td>${b.returnDate}</td>
+    <td style="color:var(--primary);font-weight:600">₹${parseFloat(b.totalCost).toLocaleString('en-IN')}</td>
+    <td><span class="status-badge ${statusClass}">${b.status}</span></td>
+    <td>
+      ${(b.status==='ACTIVE' || b.status==='CONFIRMED') ? `<button class="btn btn-sm" style="background:rgba(59,130,246,0.1);color:var(--secondary-light);border:1px solid rgba(59,130,246,0.2);margin-right:4px" onclick="openTracking(${b.car?.id})">📍 Track</button>` : ''}
+      ${canCancel ? `<button class="btn btn-sm" style="background:rgba(220,38,38,0.15);color:#fc8181;border:1px solid rgba(220,38,38,0.3)" onclick="cancelBooking(${b.id})">Cancel</button>` : ''}
+      ${(!canCancel && b.status!=='ACTIVE' && b.status!=='CONFIRMED') ? '–' : ''}
+    </td>
+  </tr>`;
+}
+
+async function cancelBooking(id) {
+  if (!confirm('Cancel this booking?')) return;
+  try {
+    await apiFetch(`/api/bookings/${id}/cancel`, 'PUT');
+    showToast('Booking cancelled successfully', 'success');
+    const user = JSON.parse(localStorage.getItem('carRentalUser'));
+    await loadBookings(user.id);
+  } catch(e) { showToast('Failed to cancel: ' + e.message, 'error'); }
+}
+
+function showSection(section) {
+  ['overview','bookings','browse','profile'].forEach(s => {
+    document.getElementById(`section-${s}`).style.display = 'none';
+    const link = document.getElementById(`link-${s}`);
+    if (link) link.classList.remove('active');
+  });
+  document.getElementById(`section-${section}`).style.display = 'block';
+  const link = document.getElementById(`link-${section}`);
+  if (link) link.classList.add('active');
+}
+
+// ══════ TRACKING MODAL LOGIC ══════
+let trackingCarId = null;
+function openTracking(carId) {
+  if (!carId) { showToast('Car information not available','error'); return; }
+  trackingCarId = carId;
+  const demoCars = JSON.parse(localStorage.getItem('demo_cars') || '[]');
+  const car = demoCars.find(c => c.id === carId);
+  
+  document.getElementById('trackingTitle').textContent = car ? `Tracking ${car.brand} ${car.model}` : 'Live Tracking';
+  document.getElementById('trackingModal').style.display = 'flex';
+  updateMarker();
+}
+
+function closeTracking() {
+  document.getElementById('trackingModal').style.display = 'none';
+  trackingCarId = null;
+}
+
+function updateMarker() {
+  if (!trackingCarId) return;
+  const demoCars = JSON.parse(localStorage.getItem('demo_cars') || '[]');
+  const car = demoCars.find(c => c.id === trackingCarId);
+  if (!car || !car.lat) return;
+
+  const marker = document.getElementById('carMarker');
+  const latEl = document.getElementById('trackLat');
+  const lngEl = document.getElementById('trackLng');
+  const speedEl = document.getElementById('trackSpeed');
+
+  const top = ((19 - car.lat) / 7) * 100;
+  const left = ((car.lng - 76) / 8) * 100;
+
+  marker.style.top = `${Math.max(10, Math.min(90, top))}%`;
+  marker.style.left = `${Math.max(10, Math.min(90, left))}%`;
+  
+  latEl.textContent = car.lat.toFixed(6);
+  lngEl.textContent = car.lng.toFixed(6);
+  speedEl.textContent = `${(35 + Math.random() * 30).toFixed(0)} km/h`;
+}
+
+window.addEventListener('carsUpdated', () => {
+    if (trackingCarId) updateMarker();
+});
+</script>
+</body>
+</html>
