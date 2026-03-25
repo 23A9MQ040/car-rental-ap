@@ -5,92 +5,33 @@
 
 const API_BASE = 'http://localhost:8080';
 
-// ══════ API FETCH / MOCK BACKEND ══════
+// ══════ API FETCH / REAL BACKEND ══════
 async function apiFetch(endpoint, method = 'GET', body = null) {
   try {
     const token = localStorage.getItem('carRentalToken');
     const headers = { 'Content-Type': 'application/json' };
-    if (token && !token.startsWith('mock')) headers['Authorization'] = 'Bearer ' + token;
+    if (token) headers['Authorization'] = 'Bearer ' + token;
     
     const options = { method, headers };
     if (body) options.body = JSON.stringify(body);
     
-    // Attempt real backend fetch (fast timeout for offline detection)
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000);
-    options.signal = controller.signal;
-
+    // Attempt real backend fetch
     const res = await fetch(API_BASE + endpoint, options);
-    clearTimeout(timeoutId);
 
     if (!res.ok) {
       const err = await res.text();
-      throw new Error(err || 'Request failed with status ' + res.status);
+      let errMsg = err;
+      try {
+          const jsonErr = JSON.parse(err);
+          errMsg = jsonErr.message || jsonErr.error || err;
+      } catch (e) {}
+      throw new Error(errMsg || 'Request failed with status ' + res.status);
     }
     const text = await res.text();
     return text ? JSON.parse(text) : null;
   } catch (error) {
-    console.warn(`[API] Real backend unavailable for ${endpoint}. Using mock fallback.`);
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        let users = JSON.parse(localStorage.getItem('demo_users') || '[]');
-        if (users.length === 0) {
-          users.push({ id: 1, name: 'Admin', email: 'saivarma111357@gmail.com', password: '12345678', role: 'ADMIN', phone: '9999999999', city: 'Visakhapatnam' });
-          localStorage.setItem('demo_users', JSON.stringify(users));
-        }
-
-        if (endpoint === '/api/auth/login' && method === 'POST') {
-          const user = users.find(u => u.email === body.email && u.password === body.password);
-          if (user) resolve({ token: 'mock-token-' + user.id, userId: user.id, name: user.name, email: user.email, role: user.role });
-          else reject(new Error('Invalid credentials'));
-        } 
-        else if (endpoint === '/api/auth/register' && method === 'POST') {
-          if (users.find(u => u.email === body.email)) reject(new Error('Email already registered'));
-          else {
-            const newUser = { id: Date.now(), ...body, role: 'USER' };
-            users.push(newUser);
-            localStorage.setItem('demo_users', JSON.stringify(users));
-            resolve({ token: 'mock-token-' + newUser.id, userId: newUser.id, name: newUser.name, email: newUser.email, role: 'USER' });
-          }
-        }
-        else if (endpoint === '/api/admin/cars' && method === 'GET') {
-          resolve(JSON.parse(localStorage.getItem('demo_cars') || '[]'));
-        }
-        else if (endpoint === '/api/admin/cars' && method === 'POST') {
-          let cars = JSON.parse(localStorage.getItem('demo_cars') || '[]');
-          const newCar = { id: Date.now(), ...body };
-          cars.push(newCar);
-          localStorage.setItem('demo_cars', JSON.stringify(cars));
-          resolve(newCar);
-        }
-        else if (endpoint.match(/\/api\/admin\/cars\/(\d+)/) && method === 'DELETE') {
-          const id = parseInt(endpoint.split('/').pop());
-          let cars = JSON.parse(localStorage.getItem('demo_cars') || '[]');
-          cars = cars.filter(c => c.id !== id);
-          localStorage.setItem('demo_cars', JSON.stringify(cars));
-          resolve({ success: true });
-        }
-        else if (endpoint === '/api/admin/users' && method === 'GET') {
-          resolve(users);
-        }
-        else if (endpoint === '/api/admin/bookings' && method === 'GET') {
-          resolve(JSON.parse(localStorage.getItem('demo_bookings') || '[]'));
-        }
-        else if (endpoint.match(/\/api\/admin\/bookings\/(\d+)\/status/) && method === 'PUT') {
-          const urlParams = new URLSearchParams(endpoint.split('?')[1]);
-          const status = urlParams.get('status');
-          const id = parseInt(endpoint.split('/')[4]);
-          let bookings = JSON.parse(localStorage.getItem('demo_bookings') || '[]');
-          const b = bookings.find(x => x.id === id);
-          if (b) b.status = status;
-          localStorage.setItem('demo_bookings', JSON.stringify(bookings));
-          resolve({ success: true });
-        }
-        else {
-          resolve({}); 
-        }
-      }, 150);
-    });
+    console.error(`[API] Error on ${endpoint}:`, error.message);
+    throw error;
   }
 }
 

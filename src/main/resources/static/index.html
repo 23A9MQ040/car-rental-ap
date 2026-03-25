@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AP Car Rentals – Premium Car Rental in Andhra Pradesh</title>
+  <meta name="description" content="Book premium cars in Visakhapatnam, Vijayawada, Tirupati, Guntur and across Andhra Pradesh. Best rates, verified vehicles, instant booking."/>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+<!-- ══════ NAVBAR ══════ -->
+<nav class="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <div class="logo-icon">🚗</div>
+      <div class="logo-text">AP <span>Cars</span></div>
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html" class="active">Home</a></li>
+      <li><a href="browse-cars.html">Browse Cars</a></li>
+      <li><a href="#cities">Cities</a></li>
+      <li><a href="#features">Why Us</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <div class="nav-actions">
+      <div id="guestMenu">
+        <a href="login.html" class="btn btn-secondary btn-sm">Login</a>
+        <a href="register.html" class="btn btn-primary btn-sm">Register</a>
+      </div>
+      <div id="userMenu">
+        <a href="user-dashboard.html" class="btn btn-secondary btn-sm">Dashboard</a>
+        <div class="avatar" id="userAvatar">U</div>
+        <button onclick="logout()" class="btn btn-sm" style="background:rgba(220,38,38,0.15);color:#fc8181;border:1px solid rgba(220,38,38,0.3)">Logout</button>
+      </div>
+      <div class="hamburger" id="hamburger" onclick="toggleMenu()">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ══════ HERO ══════ -->
+<section class="hero" id="home">
+  <div class="hero-bg"></div>
+  <div class="hero-pattern"></div>
+  <div class="hero-content">
+    <div class="hero-text">
+      <div class="hero-eyebrow">
+        <span class="badge badge-saffron">🏆 Andhra Pradesh's #1 Car Rental</span>
+      </div>
+      <h1 class="hero-title">
+        Explore <span class="highlight">Andhra Pradesh</span><br/>Your Way
+      </h1>
+      <p class="hero-desc">
+        From the beaches of Visakhapatnam to the temples of Tirupati — rent premium cars at the best prices. 15+ cities, 150+ vehicles, instant booking.
+      </p>
+      <div class="hero-actions">
+        <a href="browse-cars.html" class="btn btn-primary btn-lg">🔍 Browse Cars</a>
+        <a href="register.html" class="btn btn-secondary btn-lg">Get Started Free</a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat-item">
+          <div class="stat-num">150+</div>
+          <div class="stat-label">Vehicles</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">15+</div>
+          <div class="stat-label">AP Cities</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">5000+</div>
+          <div class="stat-label">Happy Customers</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">4.8★</div>
+          <div class="stat-label">Average Rating</div>
+        </div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="hero-card-main">
+        <img src="https://imgd.aeplcdn.com/664x374/n/cw/ec/44709/fortuner-exterior-right-front-three-quarter-3.jpeg?isig=0&q=80" alt="Featured Car" class="hero-car-img"/>
+        <div class="hero-card-info">
+          <h3>Toyota Fortuner 4WD</h3>
+          <div class="hero-card-meta">
+            <div class="meta-tag">⛽ Diesel</div>
+            <div class="meta-tag">⚙️ Automatic</div>
+            <div class="meta-tag">👥 7 Seats</div>
+            <div class="meta-tag">📍 Tirupati</div>
+          </div>
+        </div>
+      </div>
+      <div class="hero-floating hf-1">
+        <div class="hf-label">Starting From</div>
+        <div class="hf-val">₹900/day</div>
+      </div>
+      <div class="hero-floating hf-2">
+        <div class="hf-label">Driver Rating</div>
+        <div class="hf-val">⭐ 4.9</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ SEARCH BOX ══════ -->
+<section class="search-section">
+  <div class="search-box">
+    <h2>🔍 Find Your Perfect Car</h2>
+    <div class="search-fields">
+      <div class="field-group">
+        <label>City</label>
+        <select id="searchCity" onchange="filterCars()">
+          <option value="">All Cities</option>
+          <option>Visakhapatnam</option>
+          <option>Vijayawada</option>
+          <option>Tirupati</option>
+          <option>Guntur</option>
+          <option>Kakinada</option>
+          <option>Rajahmundry</option>
+          <option>Nellore</option>
+          <option>Kurnool</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label>Car Type</label>
+        <select id="searchType" onchange="filterCars()">
+          <option value="">All Types</option>
+          <option>Hatchback</option>
+          <option>Sedan</option>
+          <option>SUV</option>
+          <option>Luxury</option>
+          <option>Minivan</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label>Pickup Date</label>
+        <input type="date" id="searchDate" min="2026-03-11"/>
+      </div>
+      <div>
+        <a href="browse-cars.html" class="btn btn-primary">Search →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ FEATURED CARS ══════ -->
+<section class="cars-section" id="cars">
+  <div class="container">
+    <div class="badge badge-green" style="display:block;text-align:center;margin-bottom:12px">Featured Fleet</div>
+    <h2 class="section-title">Popular Cars in Andhra Pradesh</h2>
+    <p class="section-subtitle">Hand-picked vehicles for your AP journey — city rides to mountain adventures</p>
+    <div class="cars-grid" id="featuredCars">
+      <!-- Injected by JS -->
+    </div>
+    <div style="text-align:center;margin-top:40px">
+      <a href="browse-cars.html" class="btn btn-primary btn-lg">View All Cars →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ CITIES ══════ -->
+<section class="cities-section" id="cities">
+  <div class="container">
+    <div class="badge badge-saffron" style="display:block;text-align:center;margin-bottom:12px">Our Coverage</div>
+    <h2 class="section-title">Available Across Andhra Pradesh</h2>
+    <p class="section-subtitle">Cars ready in all major AP cities and districts</p>
+    <div class="cities-grid">
+      <div class="city-card" onclick="window.location='browse-cars.html?city=Visakhapatnam'">
+        <div class="city-emoji">🌊</div>
+        <div class="city-name">Visakhapatnam</div>
+        <div class="city-count">35+ Cars</div>
+      </div>
+      <div class="city-card" onclick="window.location='browse-cars.html?city=Vijayawada'">
+        <div class="city-emoji">🏙️</div>
+        <div class="city-name">Vijayawada</div>
+        <div class="city-count">28+ Cars</div>
+      </div>
+      <div class="city-card" onclick="window.location='browse-cars.html?city=Tirupati'">
+        <div class="city-emoji">🛕</div>
+        <div class="city-name">Tirupati</div>
+        <div class="city-count">22+ Cars</div>
+      </div>
+      <div class="city-card" onclick="window.location='browse-cars.html?city=Guntur'">
+        <div class="city-emoji">🌶️</div>
+        <div class="city-name">Guntur</div>
+        <div class="city-count">18+ Cars</div>
+      </div>
+      <div class="city-card" onclick="window.location='browse-cars.html?city=Kakinada'">
+        <div class="city-emoji">⚡</div>
+        <div class="city-name">Kakinada</div>
+        <div class="city-count">15+ Cars</div>
+      </div>
+      <div class="city-card" onclick="window.location='browse-cars.html?city=Rajahmundry'">
+        <div class="city-emoji">🌿</div>
+        <div class="city-name">Rajahmundry</div>
+        <div class="city-count">12+ Cars</div>
+      </div>
+      <div class="city-card" onclick="window.location='browse-cars.html?city=Nellore'">
+        <div class="city-emoji">🐟</div>
+        <div class="city-name">Nellore</div>
+        <div class="city-count">14+ Cars</div>
+      </div>
+      <div class="city-card" onclick="window.location='browse-cars.html?city=Kurnool'">
+        <div class="city-emoji">🏔️</div>
+        <div class="city-name">Kurnool</div>
+        <div class="city-count">10+ Cars</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ FEATURES ══════ -->
+<section class="features-section" id="features">
+  <div class="container">
+    <h2 class="section-title">Why Choose AP Cars?</h2>
+    <p class="section-subtitle">Built for travellers across Andhra Pradesh</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h3>Instant Booking</h3>
+        <p>Book your car in under 2 minutes. Instant confirmation, no waiting, no paperwork hassle.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🛡️</div>
+        <h3>Fully Insured Vehicles</h3>
+        <p>Every car on our platform comes with comprehensive insurance for complete peace of mind.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💰</div>
+        <h3>Best Price Guarantee</h3>
+        <p>Transparent pricing starting from ₹900/day. No hidden charges, no surprise fees.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📍</div>
+        <h3>Doorstep Delivery</h3>
+        <p>Get your car delivered to your hotel, railway station or home across AP cities.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔧</div>
+        <h3>24/7 Road Support</h3>
+        <p>On-call roadside assistance across all AP highways. We're here whenever you need us.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📱</div>
+        <h3>Easy Management</h3>
+        <p>Track bookings, extend rentals, and manage everything from your personal dashboard.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ TESTIMONIALS ══════ -->
+<section class="testimonials-section">
+  <div class="container">
+    <h2 class="section-title">What Our Customers Say</h2>
+    <p class="section-subtitle">Real experiences from travellers across Andhra Pradesh</p>
+    <div class="testimonials-grid">
+      <div class="testimonial-card">
+        <div class="stars">★★★★★</div>
+        <p class="testimonial-text">"Rented a Fortuner for our Tirupati pilgrimage. The process was seamless and the vehicle was spotless. Highly recommend AP Cars for temple visits!"</p>
+        <div class="testimonial-author">
+          <div class="author-avatar">R</div>
+          <div>
+            <div class="author-name">Ramaiah Reddy</div>
+            <div class="author-city">📍 Tirupati</div>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial-card">
+        <div class="stars">★★★★★</div>
+        <p class="testimonial-text">"Used the Tata Nexon EV in Kakinada for a week. Zero fuel cost, amazing range, and pickup was right at my doorstep. Modern and eco-friendly!"</p>
+        <div class="testimonial-author">
+          <div class="author-avatar">S</div>
+          <div>
+            <div class="author-name">Sravani Devi</div>
+            <div class="author-city">📍 Kakinada</div>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial-card">
+        <div class="stars">★★★★⭐</div>
+        <p class="testimonial-text">"Took the Mahindra Thar to Belum Caves from Kurnool. Incredible off-road capability and amazing adventure. The booking process on this app was super easy!"</p>
+        <div class="testimonial-author">
+          <div class="author-avatar">V</div>
+          <div>
+            <div class="author-name">Venkat Rao</div>
+            <div class="author-city">📍 Kurnool</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ CTA ══════ -->
+<section class="cta-section">
+  <div class="cta-banner">
+    <div class="badge badge-saffron" style="margin-bottom:16px">Special Offer – March 2026</div>
+    <h2>Ready for Your Andhra Pradesh Journey?</h2>
+    <p>Get 10% off your first booking! Use code <strong style="color:var(--accent)">APTRAVEL10</strong> at checkout.</p>
+    <div class="cta-actions">
+      <a href="register.html" class="btn btn-primary btn-lg">Start Booking Now 🚗</a>
+      <a href="browse-cars.html" class="btn btn-secondary btn-lg">View All Cars</a>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ FOOTER ══════ -->
+<footer id="contact">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="nav-logo">
+        <div class="logo-icon">🚗</div>
+        <div class="logo-text">AP <span>Cars</span></div>
+      </div>
+      <p>Andhra Pradesh's most trusted car rental platform. We connect drivers with premium vehicles across the state.</p>
+      <div class="social-links">
+        <a href="#" class="social-link">📘</a>
+        <a href="#" class="social-link">📸</a>
+        <a href="#" class="social-link">🐦</a>
+        <a href="#" class="social-link">▶️</a>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>Quick Links</h4>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="browse-cars.html">Browse Cars</a></li>
+        <li><a href="login.html">Login</a></li>
+        <li><a href="register.html">Register</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Cities</h4>
+      <ul>
+        <li><a href="browse-cars.html?city=Visakhapatnam">Visakhapatnam</a></li>
+        <li><a href="browse-cars.html?city=Vijayawada">Vijayawada</a></li>
+        <li><a href="browse-cars.html?city=Tirupati">Tirupati</a></li>
+        <li><a href="browse-cars.html?city=Guntur">Guntur</a></li>
+        <li><a href="browse-cars.html?city=Kakinada">Kakinada</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Contact</h4>
+      <ul>
+        <li><a href="#">📞 +91-6304467639</a></li>
+        <li><a href="#">✉️ support@apcars.in</a></li>
+        <li><a href="#">📍 Visakhapatnam, AP</a></li>
+        <li><a href="#">🕐 24/7 Support</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 AP Cars Rental. Made with ❤️ in Andhra Pradesh</span>
+    <span>Privacy Policy · Terms of Service</span>
+  </div>
+</footer>
+
+<!-- Toast -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="js/main.js"></script>
+<script>
+// ── Page Init ──
+document.addEventListener('DOMContentLoaded', () => {
+  renderFeaturedCars();
+  checkAuthState();
+  // Set min date for search
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('searchDate').min = today;
+  document.getElementById('searchDate').value = today;
+});
+
+async function renderFeaturedCars() {
+  const grid = document.getElementById('featuredCars');
+  grid.innerHTML = '<p style="color:var(--text-muted);text-align:center;grid-column:1/-1;padding:40px">Loading featured cars...</p>';
+  try {
+    const cars = await apiFetch('/api/cars');
+    const featured = cars.slice(0, 6);
+    grid.innerHTML = featured.map(car => createCarCard(car)).join('');
+  } catch (e) {
+    // Fallback static data for demo
+    grid.innerHTML = getStaticCars().slice(0, 6).map(car => createCarCard(car)).join('');
+  }
+}
+
+function filterCars() {
+  const city = document.getElementById('searchCity').value;
+  const type = document.getElementById('searchType').value;
+  let url = 'browse-cars.html?';
+  if (city) url += `city=${city}&`;
+  if (type) url += `type=${type}`;
+  if (city || type) window.location.href = url;
+}
+</script>
+</body>
+</html>

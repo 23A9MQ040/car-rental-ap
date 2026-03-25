@@ -347,33 +347,48 @@ function formatCard(input) {
 }
 
 async function confirmAndPay() {
-  const user = JSON.parse(localStorage.getItem('carRentalUser'));
   const btn = document.getElementById('confirmBtn');
   btn.innerHTML = '⏳ Processing...'; btn.disabled = true;
 
   try {
     const payload = {
       carId:          parseInt(bookingParams.carId),
-      userId:         user.id,
       pickupCity:     bookingParams.pickupCity,
       dropCity:       bookingParams.dropCity,
       pickupDate:     bookingParams.pickupDate,
       returnDate:     bookingParams.returnDate,
       specialRequests: bookingParams.special || ''
     };
+    
+    // 1. Create Booking
     const booking = await apiFetch('/api/bookings', 'POST', payload);
-    showSuccess(booking);
+    
+    // 2. Process Payment
+    btn.innerHTML = '💳 Securing Payment...';
+    try {
+        const paymentRes = await apiFetch('/api/payments/process', 'POST', {
+            bookingId: booking.id,
+            paymentMethod: selectedPayment.toUpperCase()
+        });
+        showSuccess(booking, paymentRes.transactionId);
+    } catch (paymentErr) {
+        showToast('Payment Failed! ' + paymentErr.message, 'error');
+        btn.innerHTML = 'Retry Payment';
+        btn.disabled = false;
+        return; // Halt success flow since payment failed
+    }
   } catch(e) {
-    // Demo success if backend not available
-    showSuccess({ id: Math.floor(Math.random() * 9000 + 1000) });
+    showToast('Failed to create booking: ' + e.message, 'error');
+    btn.innerHTML = 'Confirm & Pay';
+    btn.disabled = false;
   }
 }
 
-function showSuccess(booking) {
+function showSuccess(booking, txnId) {
   document.getElementById('bookingForm').style.display = 'none';
   document.getElementById('successScreen').style.display = 'block';
   const id = booking.id || Math.floor(Math.random() * 9000 + 1000);
-  document.getElementById('confirmId').textContent = `#AP-2026-${String(id).padStart(4,'0')}`;
+  document.getElementById('confirmId').innerHTML = `#AP-2026-${String(id).padStart(4,'0')}<br/><small style="color:var(--text-muted);font-weight:400">TXN: ${txnId || 'N/A'}</small>`;
   document.getElementById('confirmAmt').textContent = `₹${bookingParams.total.toLocaleString('en-IN')}`;
   showToast('🎉 Booking confirmed! Welcome aboard.', 'success');
 }
