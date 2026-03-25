@@ -1,728 +1,404 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NEON DRIVE - Cinematic Ad</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@400;600;700&display=swap" rel="stylesheet">
-<style>
-:root {
-  --bg: #04040a;
-  --deep-purple: #0d0020;
-  --neon-blue: #00c8ff;
-  --neon-violet: #8b00ff;
-  --neon-cyan: #00ffe7;
-  --neon-orange: #ff6a00;
-  --fire-red: #ff2200;
-  --fire-yellow: #ffcc00;
-  --glass-fill: rgba(255,255,255,0.04);
-  --glass-border: rgba(255,255,255,0.09);
-  --wheel-speed: 0s;
-}
-
-* { margin: 0; padding: 0; box-sizing: border-box; }
-
-body {
-  background: radial-gradient(circle at center, var(--deep-purple) 0%, var(--bg) 100%);
-  color: #fff;
-  font-family: 'Exo 2', sans-serif;
-  overflow: hidden;
-  height: 100vh; width: 100vw;
-}
-
-/* ── OVERLAYS ── */
-.scanlines {
-  position: absolute; top:0; left:0; width:100vw; height:100vh;
-  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.025) 2px, rgba(255,255,255,0.025) 4px);
-  z-index: 100; pointer-events: none;
-  animation: scan 8s linear infinite;
-}
-@keyframes scan { 100% { background-position: 0 100vh; } }
-
-#canvas-fx {
-  position: absolute; top:0; left:0; width:100vw; height:100vh;
-  z-index: 0; pointer-events: none;
-}
-
-/* ── 3D SCENE ── */
-.scene-container {
-  position: absolute; top: 50%; left: 50%;
-  width: 900px; height: 500px;
-  transform: translate(-50%, -50%);
-  perspective: 900px;
-  transform-style: preserve-3d;
-  z-index: 1;
-  opacity: 0;
-}
-body.intro .scene-container {
-  opacity: 1; transition: opacity 1.5s ease;
-}
-
-/* Roadmap */
-.road {
-  position: absolute;
-  top: 50%; left: -50%; width: 200%; height: 2000px;
-  background: #020205;
-  transform: rotateX(70deg) translateZ(-100px);
-  transform-style: preserve-3d;
-  border-left: 2px solid var(--neon-blue);
-  border-right: 2px solid var(--neon-blue);
-  box-shadow: 0 0 40px var(--neon-blue) inset;
-}
-.road::after {
-  content:''; position: absolute; left: 50%; top: 0;
-  width: 4px; height: 100%;
-  background: repeating-linear-gradient(0deg, var(--neon-cyan) 0, var(--neon-cyan) 80px, transparent 80px, transparent 160px);
-  transform: translateX(-50%);
-}
-body.move-road .road::after {
-  animation: roadLines var(--wheel-speed) linear infinite;
-}
-@keyframes roadLines { to { background-position: 0 160px; } }
-
-/* Speed Lines (CSS driven) */
-.speed-lines-container {
-  position: absolute; width: 100%; height: 100%;
-  transform: translateZ(10px); pointer-events: none; opacity: 0;
-}
-body.speed-lines .speed-lines-container { opacity: 1; }
-.speed-line {
-  position: absolute; height: 2px;
-  background: linear-gradient(90deg, transparent, var(--neon-blue), transparent);
-  width: 200px; opacity: 0;
-  animation: speedLineAnim 0.15s linear infinite;
-}
-@keyframes speedLineAnim {
-  0% { transform: translateX(900px); opacity: 0; }
-  50% { opacity: 0.8; }
-  100% { transform: translateX(-200px); opacity: 0; }
-}
-
-/* ── CHARACTERS ── */
-.svg-char { width: 40px; height: 80px; fill: none; stroke-width: 2px; }
-
-/* Agent */
-.agent-wrapper {
-  position: absolute; top: 220px; left: 100px;
-  transform: translateZ(20px); z-index: 5;
-}
-.agent { stroke: var(--neon-blue); filter: drop-shadow(0 0 5px var(--neon-blue)); }
-.desk {
-  position: absolute; top: 40px; left: 10px;
-  width: 100px; height: 50px;
-  background: var(--glass-fill); backdrop-filter: blur(18px);
-  border: 1px solid var(--glass-border);
-  box-shadow: 0 0 15px rgba(0,200,255,0.2); border-radius: 4px;
-}
-.agent-arm { transform-origin: 50% 30%; transition: transform 0.6s ease; }
-body.key-handover .agent-arm { transform: rotate(-45deg); }
-
-.key-obj {
-  position: absolute; top: 35px; left: 35px;
-  width: 15px; height: 15px;
-  stroke: var(--neon-cyan); filter: drop-shadow(0 0 10px var(--neon-cyan));
-  transition: all 0.4s ease;
-}
-body.key-pulse .key-obj { box-shadow: 0 0 30px var(--neon-cyan); }
-body.key-pass .key-obj { transform: translate(110px, 5px) scale(1); }
-
-/* Customer */
-.customer-wrapper {
-  position: absolute; top: 220px; left: -400px;
-  transform: translateZ(30px); z-index: 6;
-  transition: transform 2s ease-in-out, opacity 0.3s;
-}
-.customer { stroke: var(--neon-violet); filter: drop-shadow(0 0 5px var(--neon-violet)); }
-.leg { transform-origin: 50% 60%; }
-body.walking .leg.l1 { animation: walk 0.4s alternate infinite; }
-body.walking .leg.l2 { animation: walk 0.4s alternate-reverse infinite; }
-@keyframes walk { from { transform: rotate(25deg); } to { transform: rotate(-25deg); } }
-
-/* ── 3D CAR COMPOSITE ── */
-.car-wrapper {
-  position: absolute; top: 280px; left: 450px;
-  width: 280px; height: 80px;
-  transform-style: preserve-3d;
-  transform: translateZ(50px);
-  z-index: 10;
-}
-.car-body {
-  position: absolute; bottom: 15px; width: 280px; height: 45px;
-  background: linear-gradient(90deg, #111, #222, #111);
-  border-radius: 15px 40px 10px 10px;
-  border: 1px solid rgba(255,255,255,0.2);
-  overflow: hidden;
-}
-.car-body::before {
-  content:''; position: absolute; top:-50%; left:-200%; width:50%; height:200%;
-  background: linear-gradient(90deg, transparent, rgba(0,200,255,0.6), transparent);
-  transform: rotate(30deg); animation: shimmer 3s infinite;
-}
-@keyframes shimmer { 100% { left: 200%; } }
-
-.car-roof {
-  position: absolute; bottom: 60px; left: 60px;
-  width: 140px; height: 35px;
-  background: #1a1a1a; border-radius: 40px 30px 0 0;
-  border-top: 1px solid var(--neon-cyan);
-}
-.windshield-r {
-  position: absolute; bottom: 60px; left: 35px; width: 35px; height: 35px;
-  background: rgba(0,200,255,0.12); backdrop-filter: blur(4px);
-  clip-path: polygon(100% 0, 100% 100%, 0 100%);
-}
-.windshield-f {
-  position: absolute; bottom: 60px; left: 200px; width: 45px; height: 35px;
-  background: rgba(0,200,255,0.12); backdrop-filter: blur(4px);
-  clip-path: polygon(0 0, 0 100%, 100% 100%);
-}
-.door {
-  position: absolute; bottom: 15px; left: 90px;
-  width: 80px; height: 40px;
-  border: 1px solid rgba(255,255,255,0.2); border-radius: 5px;
-  transform-origin: left; transition: transform 0.5s ease;
-}
-body.door-open .door { transform: rotateY(-65deg); }
-
-/* Wheels */
-.wheel {
-  position: absolute; bottom: 0; width: 45px; height: 45px;
-  background: #111; border-radius: 50%;
-  border: 4px solid #050505; box-shadow: 0 0 10px var(--neon-violet);
-}
-.wheel-r { left: 40px; } .wheel-f { left: 200px; }
-.wheel-inner {
-  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-}
-.spoke {
-  position: absolute; top: 50%; left: 0; width: 100%; height: 2px;
-  background: var(--neon-violet); transform-origin: center;
-}
-.s1 { transform: rotate(0deg); } .s2 { transform: rotate(45deg); }
-.s3 { transform: rotate(90deg); } .s4 { transform: rotate(135deg); }
-
-body.wheel-spin .wheel-inner {
-  animation: spin var(--wheel-speed) linear infinite;
-}
-@keyframes spin { 100% { transform: rotate(360deg); } }
-body.wheel-lock .wheel-inner { animation-play-state: paused; }
-
-/* Lights */
-.headlight {
-  position: absolute; bottom: 30px; right: 0;
-  width: 10px; height: 15px; background: #fff;
-  border-radius: 50%; box-shadow: 0 0 10px var(--neon-blue);
-  opacity: 0; transition: all 0.3s;
-}
-body.headlights-on .headlight {
-  opacity: 1; animation: headPulse 1.2s infinite alternate;
-}
-@keyframes headPulse { to { box-shadow: 0 0 30px var(--neon-blue); } }
-
-body.headlights-max .headlight {
-  box-shadow: 0 0 40px 10px var(--neon-cyan) !important; animation: none;
-}
-.beam {
-  position: absolute; top: -30px; right: -600px;
-  width: 600px; height: 80px;
-  background: linear-gradient(90deg, rgba(0,255,231,0.6), transparent);
-  clip-path: polygon(0 40%, 100% 0, 100% 100%, 0 60%);
-  opacity: 0; transition: opacity 1s; pointer-events: none;
-}
-body.headlights-max .beam { opacity: 0.4; }
-
-.taillight {
-  position: absolute; bottom: 35px; left: 0;
-  width: 8px; height: 12px; background: var(--fire-red);
-  border-radius: 5px 0 0 5px; box-shadow: 0 0 10px var(--fire-red);
-}
-body.brake .taillight {
-  box-shadow: 0 0 60px 20px #ff0000; animation: brakePulse 0.1s infinite alternate;
-}
-@keyframes brakePulse { to { box-shadow: 0 0 40px 10px #ff0000; } }
-
-.undercar-glow {
-  position: absolute; bottom: 10px; left: 20px; width: 240px; height: 5px;
-  box-shadow: 0 15px 20px var(--neon-violet); opacity: 0; transition: opacity 1s;
-}
-body.engine-on .undercar-glow { opacity: 1; }
-body.flare .undercar-glow { box-shadow: 0 15px 40px var(--neon-violet); }
-
-/* In-car UI */
-.dash-glow {
-  position: absolute; bottom: 65px; left: 180px; width: 20px; height: 20px;
-  background: radial-gradient(circle, var(--neon-cyan), transparent);
-  opacity: 0; transition: opacity 0.5s;
-}
-body.dash-on .dash-glow { opacity: 0.6; }
-
-.eq-bars {
-  position: absolute; bottom: 15px; left: 30px; display: flex; gap: 2px;
-  opacity: 0; transform: rotate(180deg);
-}
-body.engine-on .eq-bars { opacity: 1; }
-.eq { width: 3px; background: var(--neon-cyan); box-shadow: 0 0 5px var(--neon-cyan); }
-
-/* ── UI OVERLAY ── */
-.ui-overlay {
-  position: absolute; top:0; left:0; width:100%; height:100%;
-  pointer-events: none; z-index: 50; padding: 40px;
-  display: flex; flex-direction: column; justify-content: space-between;
-}
-.top-row { display: flex; justify-content: space-between; align-items: flex-start; }
-.logo-box { display: flex; align-items: center; gap: 15px; animation: float 3s ease-in-out infinite; }
-.logo-svg { width: 40px; height: 40px; fill: var(--neon-blue); filter: drop-shadow(0 0 10px var(--neon-blue)); }
-@keyframes float { 50% { transform: translateY(-6px); } }
-h1.brand { font-family: 'Orbitron'; font-size: 24px; color: var(--neon-blue); text-shadow: 0 0 10px var(--neon-blue); margin-bottom: 2px; }
-.tagline { font-size: 12px; color: #888; letter-spacing: 1px; }
-
-.status-pill {
-  background: var(--glass-fill); backdrop-filter: blur(18px);
-  border: 1px solid var(--glass-border); border-radius: 50px;
-  padding: 10px 20px; display: flex; align-items: center; gap: 10px;
-}
-.dot { width: 10px; height: 10px; background: #0f0; border-radius: 50%; box-shadow: 0 0 10px #0f0; animation: blink 1.2s infinite alternate; }
-@keyframes blink { to { opacity: 0.3; } }
-
-.bottom-row { display: flex; justify-content: space-between; align-items: flex-end; }
-.info-card {
-  background: var(--glass-fill); backdrop-filter: blur(18px);
-  border: 1px solid var(--glass-border); border-radius: 12px;
-  padding: 20px; width: 320px; pointer-events: auto;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5); transition: all 0.3s;
-}
-.info-card:hover { transform: translateY(-6px); box-shadow: 0 15px 40px rgba(0,200,255,0.2); }
-.info-title { font-family: 'Orbitron'; color: var(--neon-cyan); margin-bottom: 15px; font-size: 16px; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px; }
-.info-line { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 14px; }
-.side-panel { margin-top: 15px; opacity: 0; transform: translateX(-20px); transition: all 0.5s; }
-body.show-side .side-panel { opacity: 1; transform: translateX(0); }
-
-.cta-container { text-align: center; pointer-events: auto; }
-.cta-btn {
-  background: var(--bg); color: #fff; font-family: 'Orbitron'; font-size: 18px;
-  padding: 15px 40px; border: 2px solid var(--neon-blue); border-radius: 8px;
-  box-shadow: inset 0 0 10px #000, 0 0 15px rgba(0,200,255,0.2);
-  cursor: pointer; position: relative; overflow: hidden; transition: 0.35s ease;
-}
-.cta-btn::before {
-  content:''; position: absolute; top:0; left:-100%; width:100%; height:100%;
-  background: var(--neon-blue); transition: left 0.35s ease; z-index: -1;
-}
-.cta-btn:hover::before { left: 0; }
-.cta-btn:hover { color: #000; box-shadow: 0 0 30px var(--neon-blue); }
-.cta-sub { margin-top: 8px; font-size: 10px; color: #666; opacity: 0.5; }
-
-.speedometer { text-align: right; }
-.speed-arc { width: 120px; height: 120px; transform: rotate(-90deg); }
-.speed-circle-bg { fill: none; stroke: var(--glass-border); stroke-width: 8; }
-.speed-circle-fg { fill: none; stroke: var(--neon-blue); stroke-width: 8; stroke-dasharray: 283; stroke-dashoffset: 283; transition: stroke-dashoffset 0.2s, stroke 0.2s; }
-.speed-val { font-family: 'Orbitron'; font-size: 32px; color: var(--neon-blue); position: absolute; top:30px; right: 20px; width: 80px; text-align: center; }
-.speed-lbl { position: absolute; top: 75px; right: 20px; width: 80px; text-align: center; font-size: 12px; color: #888; }
-body.brake .speed-circle-fg { stroke: var(--fire-red); }
-
-/* Center Text Flash */
-.flash-text {
-  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
-  font-family: 'Orbitron'; font-size: 40px; font-weight: 900;
-  text-align: center; z-index: 10; opacity: 0; pointer-events: none;
-}
-.flash.active {
-  animation: flashAnim 1.5s ease-out forwards;
-}
-@keyframes flashAnim {
-  0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
-  20% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
-  100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
-}
-
-/* Typwriter Intro */
-.typewriter {
-  position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%);
-  text-align: center; z-index: 15;
-}
-#type-text {
-  font-family: 'Orbitron'; font-size: 36px; color: var(--neon-blue);
-  text-shadow: 0 0 20px var(--neon-blue); border-right: 4px solid var(--neon-cyan);
-  white-space: nowrap; overflow: hidden; display: inline-block;
-}
-#sub-text { margin-top: 10px; letter-spacing: 5px; opacity: 0; transition: opacity 1s; }
-body.intro-done .typewriter { opacity: 0; transition: opacity 0.5s; }
-
-/* Dynamic Animations applied via JS classes onto car-wrapper & scene */
-/* ... Handled directly via inline styles / class combinations below ... */
-
-/* Brackets */
-.bracket { position: absolute; width: 50px; height: 50px; border: 2px solid var(--neon-blue); opacity: 0; transition: all 1s ease; }
-.br-tl { top: 30px; left: 30px; border-right: none; border-bottom: none; transform: scale(0); transform-origin: top left; }
-.br-tr { top: 30px; right: 30px; border-left: none; border-bottom: none; transform: scale(0); transform-origin: top right; }
-.br-bl { bottom: 30px; left: 30px; border-right: none; border-top: none; transform: scale(0); transform-origin: bottom left; }
-.br-br { bottom: 30px; right: 30px; border-left: none; border-top: none; transform: scale(0); transform-origin: bottom right; }
-body.intro .bracket { opacity: 1; transform: scale(1); }
-</style>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AP Car Rentals – Premium Car Rental in Andhra Pradesh</title>
+  <meta name="description" content="Book premium cars in Visakhapatnam, Vijayawada, Tirupati, Guntur and across Andhra Pradesh. Best rates, verified vehicles, instant booking."/>
+  <link rel="stylesheet" href="css/style.css"/>
 </head>
 <body>
 
-<canvas id="canvas-fx"></canvas>
-<div class="scanlines"></div>
+<!-- ══════ NAVBAR ══════ -->
+<nav class="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <div class="logo-icon">🚗</div>
+      <div class="logo-text">AP <span>Cars</span></div>
+    </a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="index.html" class="active">Home</a></li>
+      <li><a href="browse-cars.html">Browse Cars</a></li>
+      <li><a href="#cities">Cities</a></li>
+      <li><a href="#features">Why Us</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <div class="nav-actions">
+      <div id="guestMenu">
+        <a href="login.html" class="btn btn-secondary btn-sm">Login</a>
+        <a href="register.html" class="btn btn-primary btn-sm">Register</a>
+      </div>
+      <div id="userMenu">
+        <a href="user-dashboard.html" class="btn btn-secondary btn-sm">Dashboard</a>
+        <div class="avatar" id="userAvatar">U</div>
+        <button onclick="logout()" class="btn btn-sm" style="background:rgba(220,38,38,0.15);color:#fc8181;border:1px solid rgba(220,38,38,0.3)">Logout</button>
+      </div>
+      <div class="hamburger" id="hamburger" onclick="toggleMenu()">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  </div>
+</nav>
 
-<div class="bracket br-tl"></div><div class="bracket br-tr"></div>
-<div class="bracket br-bl"></div><div class="bracket br-br"></div>
+<!-- ══════ HERO ══════ -->
+<section class="hero" id="home">
+  <div class="hero-bg"></div>
+  <div class="hero-pattern"></div>
+  <div class="hero-content">
+    <div class="hero-text">
+      <div class="hero-eyebrow">
+        <span class="badge badge-saffron">🏆 Andhra Pradesh's #1 Car Rental</span>
+      </div>
+      <h1 class="hero-title">
+        Explore <span class="highlight">Andhra Pradesh</span><br/>Your Way
+      </h1>
+      <p class="hero-desc">
+        From the beaches of Visakhapatnam to the temples of Tirupati — rent premium cars at the best prices. 15+ cities, 150+ vehicles, instant booking.
+      </p>
+      <div class="hero-actions">
+        <a href="browse-cars.html" class="btn btn-primary btn-lg">🔍 Browse Cars</a>
+        <a href="register.html" class="btn btn-secondary btn-lg">Get Started Free</a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat-item">
+          <div class="stat-num">150+</div>
+          <div class="stat-label">Vehicles</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">15+</div>
+          <div class="stat-label">AP Cities</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">5000+</div>
+          <div class="stat-label">Happy Customers</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-num">4.8★</div>
+          <div class="stat-label">Average Rating</div>
+        </div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="hero-card-main">
+        <img src="https://imgd.aeplcdn.com/664x374/n/cw/ec/44709/fortuner-exterior-right-front-three-quarter-3.jpeg?isig=0&q=80" alt="Featured Car" class="hero-car-img"/>
+        <div class="hero-card-info">
+          <h3>Toyota Fortuner 4WD</h3>
+          <div class="hero-card-meta">
+            <div class="meta-tag">⛽ Diesel</div>
+            <div class="meta-tag">⚙️ Automatic</div>
+            <div class="meta-tag">👥 7 Seats</div>
+            <div class="meta-tag">📍 Tirupati</div>
+          </div>
+        </div>
+      </div>
+      <div class="hero-floating hf-1">
+        <div class="hf-label">Starting From</div>
+        <div class="hf-val">₹900/day</div>
+      </div>
+      <div class="hero-floating hf-2">
+        <div class="hf-label">Driver Rating</div>
+        <div class="hf-val">⭐ 4.9</div>
+      </div>
+    </div>
+  </div>
+</section>
 
-<div class="typewriter">
-  <div id="type-text"></div>
-  <div id="sub-text">Instant Booking. Infinite Roads.</div>
-</div>
-
-<div class="flash-text" id="flash1" style="color:var(--neon-cyan);text-shadow:0 0 20px var(--neon-cyan)">🔑 RIDE CONFIRMED</div>
-<div class="flash-text" id="flash2" style="color:var(--neon-blue);text-shadow:0 0 20px var(--neon-blue)">⚡ ENGINE ONLINE</div>
-<div class="flash-text" id="flash3" style="color:var(--fire-yellow);text-shadow:0 0 20px var(--fire-yellow)">🔥 BURNOUT MODE</div>
-<div class="flash-text" id="flash4" style="color:var(--neon-violet);text-shadow:0 0 20px var(--neon-violet)">🚀 MAXIMUM POWER</div>
-
-<div class="ui-overlay">
-  <div class="top-row">
-    <div class="logo-box">
-      <svg class="logo-svg" viewBox="0 0 100 100">
-        <polygon points="50,5 95,25 95,75 50,95 5,75 5,25"/>
-      </svg>
+<!-- ══════ SEARCH BOX ══════ -->
+<section class="search-section">
+  <div class="search-box">
+    <h2>🔍 Find Your Perfect Car</h2>
+    <div class="search-fields">
+      <div class="field-group">
+        <label>City</label>
+        <select id="searchCity" onchange="filterCars()">
+          <option value="">All Cities</option>
+          <option>Visakhapatnam</option>
+          <option>Vijayawada</option>
+          <option>Tirupati</option>
+          <option>Guntur</option>
+          <option>Kakinada</option>
+          <option>Rajahmundry</option>
+          <option>Nellore</option>
+          <option>Kurnool</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label>Car Type</label>
+        <select id="searchType" onchange="filterCars()">
+          <option value="">All Types</option>
+          <option>Hatchback</option>
+          <option>Sedan</option>
+          <option>SUV</option>
+          <option>Luxury</option>
+          <option>Minivan</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label>Pickup Date</label>
+        <input type="date" id="searchDate" min="2026-03-11"/>
+      </div>
       <div>
-        <h1 class="brand">NEON DRIVE</h1>
-        <div class="tagline">CAR RENTAL SYSTEM</div>
-      </div>
-    </div>
-    <div class="status-pill">
-      <div class="dot"></div>
-      <div>
-        <div style="font-weight:700">24 Cars Available</div>
-        <div style="font-size:10px;color:var(--neon-cyan)">⚡ Instant Booking Active</div>
+        <a href="browse-cars.html" class="btn btn-primary">Search →</a>
       </div>
     </div>
   </div>
+</section>
 
-  <div class="bottom-row">
-    <div class="info-card">
-      <div class="info-title">◈ PHANTOM X SERIES 2026</div>
-      <div class="info-line"><span>⚡</span> 0–100 km/h : 2.8s</div>
-      <div class="info-line"><span>📍</span> GPS Tracking : LIVE</div>
-      <div class="info-line" id="status-line"><span>🛡</span> Status : Awaiting Driver</div>
-      <div class="side-panel">
-        <div class="info-line" style="color:var(--neon-cyan)">[⚡] Electric Performance</div>
-        <div class="info-line" style="color:var(--neon-cyan)">[🛡] Fully Insured</div>
-        <div class="info-line" style="color:var(--neon-cyan)">[📍] GPS Tracked</div>
+<!-- ══════ FEATURED CARS ══════ -->
+<section class="cars-section" id="cars">
+  <div class="container">
+    <div class="badge badge-green" style="display:block;text-align:center;margin-bottom:12px">Featured Fleet</div>
+    <h2 class="section-title">Popular Cars in Andhra Pradesh</h2>
+    <p class="section-subtitle">Hand-picked vehicles for your AP journey — city rides to mountain adventures</p>
+    <div class="cars-grid" id="featuredCars">
+      <!-- Injected by JS -->
+    </div>
+    <div style="text-align:center;margin-top:40px">
+      <a href="browse-cars.html" class="btn btn-primary btn-lg">View All Cars →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ══════ CITIES ══════ -->
+<section class="cities-section" id="cities">
+  <div class="container">
+    <div class="badge badge-saffron" style="display:block;text-align:center;margin-bottom:12px">Our Coverage</div>
+    <h2 class="section-title">Available Across Andhra Pradesh</h2>
+    <p class="section-subtitle">Cars ready in all major AP cities and districts</p>
+    <div class="cities-grid">
+      <div class="city-card" onclick="window.location='browse-cars.html?city=Visakhapatnam'">
+        <div class="city-emoji">🌊</div>
+        <div class="city-name">Visakhapatnam</div>
+        <div class="city-count">35+ Cars</div>
+      </div>
+      <div class="city-card" onclick="window.location='browse-cars.html?city=Vijayawada'">
+        <div class="city-emoji">🏙️</div>
+        <div class="city-name">Vijayawada</div>
+        <div class="city-count">28+ Cars</div>
+      </div>
+      <div class="city-card" onclick="window.location='browse-cars.html?city=Tirupati'">
+        <div class="city-emoji">🛕</div>
+        <div class="city-name">Tirupati</div>
+        <div class="city-count">22+ Cars</div>
+      </div>
+      <div class="city-card" onclick="window.location='browse-cars.html?city=Guntur'">
+        <div class="city-emoji">🌶️</div>
+        <div class="city-name">Guntur</div>
+        <div class="city-count">18+ Cars</div>
+      </div>
+      <div class="city-card" onclick="window.location='browse-cars.html?city=Kakinada'">
+        <div class="city-emoji">⚡</div>
+        <div class="city-name">Kakinada</div>
+        <div class="city-count">15+ Cars</div>
+      </div>
+      <div class="city-card" onclick="window.location='browse-cars.html?city=Rajahmundry'">
+        <div class="city-emoji">🌿</div>
+        <div class="city-name">Rajahmundry</div>
+        <div class="city-count">12+ Cars</div>
+      </div>
+      <div class="city-card" onclick="window.location='browse-cars.html?city=Nellore'">
+        <div class="city-emoji">🐟</div>
+        <div class="city-name">Nellore</div>
+        <div class="city-count">14+ Cars</div>
+      </div>
+      <div class="city-card" onclick="window.location='browse-cars.html?city=Kurnool'">
+        <div class="city-emoji">🏔️</div>
+        <div class="city-name">Kurnool</div>
+        <div class="city-count">10+ Cars</div>
       </div>
     </div>
-    
-    <div class="cta-container">
-      <button class="cta-btn" onclick="window.location.href='home.html'">ENTER WEBSITE →</button>
-      <div class="cta-sub">© NeonDrive Car Rental System | Powered by Java Full Stack</div>
-    </div>
+  </div>
+</section>
 
-    <div class="speedometer">
-      <div style="position:relative">
-        <svg class="speed-arc">
-          <circle cx="60" cy="60" r="45" class="speed-circle-bg"/>
-          <circle cx="60" cy="60" r="45" class="speed-circle-fg" id="speed-meter"/>
-        </svg>
-        <div class="speed-val" id="speed-val">0</div>
-        <div class="speed-lbl">KM/H</div>
+<!-- ══════ FEATURES ══════ -->
+<section class="features-section" id="features">
+  <div class="container">
+    <h2 class="section-title">Why Choose AP Cars?</h2>
+    <p class="section-subtitle">Built for travellers across Andhra Pradesh</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h3>Instant Booking</h3>
+        <p>Book your car in under 2 minutes. Instant confirmation, no waiting, no paperwork hassle.</p>
+        <a href="browse-cars.html" class="btn btn-primary btn-sm" style="margin-top:16px;width:100%">Book Now</a>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🛡️</div>
+        <h3>Fully Insured Vehicles</h3>
+        <p>Every car on our platform comes with comprehensive insurance for complete peace of mind.</p>
+        <a href="browse-cars.html" class="btn btn-secondary btn-sm" style="margin-top:16px;width:100%">View Cars</a>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💰</div>
+        <h3>Best Price Guarantee</h3>
+        <p>Transparent pricing starting from ₹900/day. No hidden charges, no surprise fees.</p>
+        <a href="browse-cars.html" class="btn btn-secondary btn-sm" style="margin-top:16px;width:100%">See Offers</a>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📍</div>
+        <h3>Doorstep Delivery</h3>
+        <p>Get your car delivered to your hotel, railway station or home across AP cities.</p>
+        <a href="#cities" class="btn btn-secondary btn-sm" style="margin-top:16px;width:100%">Select City</a>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔧</div>
+        <h3>24/7 Road Support</h3>
+        <p>On-call roadside assistance across all AP highways. We're here whenever you need us.</p>
+        <a href="#contact" class="btn btn-secondary btn-sm" style="margin-top:16px;width:100%">Contact Us</a>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📱</div>
+        <h3>Easy Management</h3>
+        <p>Track bookings, extend rentals, and manage everything from your personal dashboard.</p>
+        <a href="login.html" class="btn btn-primary btn-sm" style="margin-top:16px;width:100%">Go to Dashboard</a>
       </div>
     </div>
   </div>
-</div>
+</section>
 
-<div class="scene-container" id="main-scene">
-  <div class="road"></div>
-  
-  <div class="agent-wrapper">
-    <div class="desk"></div>
-    <svg class="svg-char agent" viewBox="0 0 40 80">
-      <circle cx="20" cy="15" r="10"/>
-      <line x1="20" y1="25" x2="20" y2="50"/>
-      <line x1="20" y1="50" x2="10" y2="80"/>
-      <line x1="20" y1="50" x2="30" y2="80"/>
-      <line x1="20" y1="30" x2="5" y2="50"/>
-      <line class="agent-arm" x1="20" y1="30" x2="35" y2="30"/>
-    </svg>
-    <svg class="key-obj" viewBox="0 0 24 24">
-      <path d="M7 14A5 5 0 0 1 7 4a5 5 0 0 1 4.5 7h4v3h3v3h-3v-3h-2v3h-3.5A5 5 0 0 1 7 14zm0-2a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
-    </svg>
-  </div>
-
-  <div class="customer-wrapper" id="customer">
-    <svg class="svg-char customer" viewBox="0 0 40 80">
-      <circle cx="20" cy="15" r="10"/>
-      <line x1="20" y1="25" x2="20" y2="50"/>
-      <line class="leg l1" x1="20" y1="50" x2="10" y2="80"/>
-      <line class="leg l2" x1="20" y1="50" x2="30" y2="80"/>
-      <line x1="20" y1="30" x2="5" y2="50"/>
-      <line id="cust-arm" x1="20" y1="30" x2="35" y2="50"/>
-    </svg>
-  </div>
-
-  <div class="car-wrapper" id="car">
-    <div class="car-body"></div>
-    <div class="car-roof"></div>
-    <div class="windshield-f"></div>
-    <div class="windshield-r"></div>
-    <div class="door" id="door"></div>
-    <div class="wheel wheel-r"><div class="wheel-inner"><div class="spoke s1"></div><div class="spoke s2"></div><div class="spoke s3"></div><div class="spoke s4"></div></div></div>
-    <div class="wheel wheel-f"><div class="wheel-inner"><div class="spoke s1"></div><div class="spoke s2"></div><div class="spoke s3"></div><div class="spoke s4"></div></div></div>
-    <div class="undercar-glow"></div>
-    <div class="headlight"><div class="beam"></div></div>
-    <div class="taillight"></div>
-    <div class="dash-glow"></div>
-    <div class="eq-bars" id="eq">
-      <div class="eq"></div><div class="eq"></div><div class="eq"></div><div class="eq"></div><div class="eq"></div>
+<!-- ══════ TESTIMONIALS ══════ -->
+<section class="testimonials-section">
+  <div class="container">
+    <h2 class="section-title">What Our Customers Say</h2>
+    <p class="section-subtitle">Real experiences from travellers across Andhra Pradesh</p>
+    <div class="testimonials-grid">
+      <div class="testimonial-card">
+        <div class="stars">★★★★★</div>
+        <p class="testimonial-text">"Rented a Fortuner for our Tirupati pilgrimage. The process was seamless and the vehicle was spotless. Highly recommend AP Cars for temple visits!"</p>
+        <div class="testimonial-author">
+          <div class="author-avatar">R</div>
+          <div>
+            <div class="author-name">Ramaiah Reddy</div>
+            <div class="author-city">📍 Tirupati</div>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial-card">
+        <div class="stars">★★★★★</div>
+        <p class="testimonial-text">"Used the Tata Nexon EV in Kakinada for a week. Zero fuel cost, amazing range, and pickup was right at my doorstep. Modern and eco-friendly!"</p>
+        <div class="testimonial-author">
+          <div class="author-avatar">S</div>
+          <div>
+            <div class="author-name">Sravani Devi</div>
+            <div class="author-city">📍 Kakinada</div>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial-card">
+        <div class="stars">★★★★⭐</div>
+        <p class="testimonial-text">"Took the Mahindra Thar to Belum Caves from Kurnool. Incredible off-road capability and amazing adventure. The booking process on this app was super easy!"</p>
+        <div class="testimonial-author">
+          <div class="author-avatar">V</div>
+          <div>
+            <div class="author-name">Venkat Rao</div>
+            <div class="author-city">📍 Kurnool</div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
+</section>
 
-  <div class="speed-lines-container" id="sl"></div>
-</div>
+<!-- ══════ CTA ══════ -->
+<section class="cta-section">
+  <div class="cta-banner">
+    <div class="badge badge-saffron" style="margin-bottom:16px">Special Offer – March 2026</div>
+    <h2>Ready for Your Andhra Pradesh Journey?</h2>
+    <p>Get 10% off your first booking! Use code <strong style="color:var(--accent)">APTRAVEL10</strong> at checkout.</p>
+    <div class="cta-actions">
+      <a href="register.html" class="btn btn-primary btn-lg">Start Booking Now 🚗</a>
+      <a href="browse-cars.html" class="btn btn-secondary btn-lg">View All Cars</a>
+    </div>
+  </div>
+</section>
 
+<!-- ══════ FOOTER ══════ -->
+<footer id="contact">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="nav-logo">
+        <div class="logo-icon">🚗</div>
+        <div class="logo-text">AP <span>Cars</span></div>
+      </div>
+      <p>Andhra Pradesh's most trusted car rental platform. We connect drivers with premium vehicles across the state.</p>
+      <div class="social-links">
+        <a href="#" class="social-link">📘</a>
+        <a href="#" class="social-link">📸</a>
+        <a href="#" class="social-link">🐦</a>
+        <a href="#" class="social-link">▶️</a>
+      </div>
+    </div>
+    <div class="footer-col">
+      <h4>Quick Links</h4>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="browse-cars.html">Browse Cars</a></li>
+        <li><a href="login.html">Login</a></li>
+        <li><a href="register.html">Register</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Cities</h4>
+      <ul>
+        <li><a href="browse-cars.html?city=Visakhapatnam">Visakhapatnam</a></li>
+        <li><a href="browse-cars.html?city=Vijayawada">Vijayawada</a></li>
+        <li><a href="browse-cars.html?city=Tirupati">Tirupati</a></li>
+        <li><a href="browse-cars.html?city=Guntur">Guntur</a></li>
+        <li><a href="browse-cars.html?city=Kakinada">Kakinada</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>Contact</h4>
+      <ul>
+        <li><a href="#">📞 +91-6304467639</a></li>
+        <li><a href="#">✉️ support@apcars.in</a></li>
+        <li><a href="#">📍 Visakhapatnam, AP</a></li>
+        <li><a href="#">🕐 24/7 Support</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 AP Cars Rental. Made with ❤️ in Andhra Pradesh</span>
+    <span>Privacy Policy · Terms of Service</span>
+  </div>
+</footer>
+
+<!-- Toast -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="js/main.js"></script>
 <script>
-// --- CANVAS PARTICLE SYSTEM ---
-const canvas = document.getElementById('canvas-fx');
-const ctx = canvas.getContext('2d');
-let cw, ch;
-function resize() { cw = canvas.width = window.innerWidth; ch = canvas.height = window.innerHeight; }
-window.addEventListener('resize', resize);
-resize();
+// ── Page Init ──
+document.addEventListener('DOMContentLoaded', () => {
+  renderFeaturedCars();
+  checkAuthState();
+  // Set min date for search
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('searchDate').min = today;
+  document.getElementById('searchDate').value = today;
+});
 
-let particles = [];
-let fireActive = false;
-let smokeThick = false;
-let frontStrike = false;
-let wheelieActive = false;
-let pMultiplier = 1;
-
-class Particle {
-  constructor(type, x, y) {
-    this.type = type;
-    this.x = x; this.y = y;
-    this.life = 1; this.decay = Math.random() * 0.02 + 0.01;
-    if(type === 'dust') {
-      this.color = ['#00c8ff','#8b00ff','#00ffe7'][Math.floor(Math.random()*3)];
-      this.vx = (Math.random()-0.5)*2; this.vy = (Math.random()-0.5)*2;
-      this.r = Math.random()*2+1; this.decay = 0;
-    } else if (type === 'fire') {
-      this.r = Math.random()*4+2;
-      this.vx = (Math.random()-0.8)*5 - 2; // shoot left/up
-      this.vy = Math.random()*-5 - 2;
-      this.decay = 0.025;
-    } else if (type === 'smoke') {
-      this.r = Math.random()*10+5; this.color = 'rgba(150,150,150,0.5)';
-      this.vx = -Math.random()*8 - 2; this.vy = Math.random()*-2 - 1;
-      this.decay = 0.015;
-    } else if (type === 'spark') {
-      this.r = Math.random()*2+1; this.color = '#ffcc00';
-      this.vx = Math.random()*8 + 2; this.vy = Math.random()*-6 - 2;
-      this.decay = 0.03;
-    } else if (type === 'shockwave') {
-      this.r = 5; this.color = 'rgba(0,200,255,0.8)';
-      this.vx = 0; this.vy = 0; this.decay = 0.02;
-    }
-  }
-  update() {
-    if(this.type === 'dust') {
-      this.x += this.vx * pMultiplier; this.y += this.vy * pMultiplier;
-      if(this.x<0)this.x=cw; if(this.x>cw)this.x=0; if(this.y<0)this.y=ch; if(this.y>ch)this.y=0;
-    } else {
-      this.x += this.vx; this.y += this.vy;
-      if(this.type === 'fire') {
-        this.r *= 0.95; this.vy += 0.1; // gravity
-        this.color = this.life > 0.6 ? '#ffcc00' : (this.life > 0.3 ? '#ff6a00' : '#ff2200');
-      } else if (this.type === 'smoke') {
-        this.r += 0.5; this.y -= 1;
-      } else if (this.type === 'spark') {
-        this.vy += 0.3; // gravity
-      } else if (this.type === 'shockwave') {
-        this.r += 15; this.life -= 0.02;
-      }
-      this.life -= this.decay;
-    }
-  }
-  draw() {
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.r, 0, Math.PI*2);
-    if(this.type === 'fire') ctx.fillStyle = this.color;
-    else if(this.type === 'smoke') ctx.fillStyle = `rgba(150,150,150,${this.life*0.5})`;
-    else if(this.type === 'shockwave' || this.type === 'spark') ctx.fillStyle = this.color;
-    else { ctx.fillStyle = `rgba(0,200,255,${0.3 * pMultiplier})`; ctx.shadowBlur=5; ctx.shadowColor=this.color;}
-    ctx.fill(); ctx.shadowBlur=0;
+async function renderFeaturedCars() {
+  const grid = document.getElementById('featuredCars');
+  grid.innerHTML = '<p style="color:var(--text-muted);text-align:center;grid-column:1/-1;padding:40px">Loading featured cars...</p>';
+  try {
+    const cars = await apiFetch('/api/cars');
+    const featured = cars.slice(0, 6);
+    grid.innerHTML = featured.map(car => createCarCard(car)).join('');
+  } catch (e) {
+    // Fallback static data for demo
+    grid.innerHTML = getStaticCars().slice(0, 6).map(car => createCarCard(car)).join('');
   }
 }
 
-for(let i=0; i<120; i++) particles.push(new Particle('dust', Math.random()*cw, Math.random()*ch));
-
-function loopFX() {
-  ctx.clearRect(0,0,cw,ch);
-  
-  // Realtime canvas coordinates roughly matched to 3D center car
-  let carBaseX = cw/2 + 100;
-  let carRearX = carBaseX - 100;
-  let carFrontX = carBaseX + 160;
-  let carY = ch/2 + 200;
-
-  if (fireActive) {
-    let count = wheelieActive ? 20 : 8;
-    for(let i=0; i<count; i++) particles.push(new Particle('fire', carRearX, carY));
-    particles.push(new Particle('smoke', carRearX, carY - 20));
-  }
-  if (smokeThick) {
-    for(let i=0; i<5; i++) particles.push(new Particle('smoke', carRearX, carY));
-    for(let i=0; i<2; i++) particles.push(new Particle('smoke', carFrontX, carY));
-  }
-  if (frontStrike) {
-    for(let i=0; i<5; i++) particles.push(new Particle('spark', carFrontX, carY - 20));
-  }
-
-  for(let i = particles.length-1; i>=0; i--) {
-    let p = particles[i]; p.update(); p.draw();
-    if(p.type !== 'dust' && p.life <= 0) particles.splice(i,1);
-  }
-  requestAnimationFrame(loopFX);
+function filterCars() {
+  const city = document.getElementById('searchCity').value;
+  const type = document.getElementById('searchType').value;
+  let url = 'browse-cars.html?';
+  if (city) url += `city=${city}&`;
+  if (type) url += `type=${type}`;
+  if (city || type) window.location.href = url;
 }
-loopFX();
-
-// --- Speed Lines CSS Prep ---
-const slc = document.getElementById('sl');
-for(let i=0; i<8; i++) {
-  let line = document.createElement('div');
-  line.className = 'speed-line';
-  line.style.top = Math.random()*100 + '%';
-  line.style.animationDelay = Math.random()*0.5 + 's';
-  slc.appendChild(line);
-}
-
-// --- JS Animation Sequence & References ---
-const b = document.body;
-const car = document.getElementById('car');
-const cust = document.getElementById('customer');
-const speedVal = document.getElementById('speed-val');
-const speedMeter = document.getElementById('speed-meter');
-let currentSpeed = 0;
-let eqInterval, speedInterval;
-
-const title = "NEON DRIVE — CAR RENTAL";
-const txtEl = document.getElementById('type-text');
-
-function flasher(id) {
-  let e = document.getElementById(id);
-  e.classList.add('active'); setTimeout(() => e.classList.remove('active'), 1500);
-}
-
-function eqAnimate() {
-  const bars = document.querySelectorAll('.eq');
-  bars.forEach(bar => { bar.style.height = (Math.random() * 14 + 4) + 'px'; });
-}
-
-function updateSpeed(target, durationStr) {
-  clearInterval(speedInterval);
-  let dur = parseFloat(durationStr)*1000; let stepTime = 50;
-  let steps = dur/stepTime; let change = (target - currentSpeed)/steps;
-  speedInterval = setInterval(() => {
-    currentSpeed += change;
-    if((change>0 && currentSpeed>=target) || (change<0 && currentSpeed<=target)) {
-      currentSpeed = target; clearInterval(speedInterval);
-    }
-    speedVal.innerText = Math.floor(currentSpeed);
-    let offset = 283 - (currentSpeed/240 * 283);
-    speedMeter.style.strokeDashoffset = Math.max(0, offset);
-  }, stepTime);
-}
-
-const phases = [
-  { t: 0, f: () => { 
-      b.className = 'intro'; txtEl.innerText=''; 
-      let i=0; let ty = setInterval(()=>{ txtEl.innerText += title.charAt(i); i++; if(i>=title.length) clearInterval(ty); }, 50);
-  }},
-  { t: 2000, f: () => { 
-      b.classList.add('key-handover', 'key-pulse', 'walking', 'intro-done');
-      cust.style.transform = 'translate(100px, 30px) translateZ(30px)'; // walk right
-  }},
-  { t: 4500, f: () => { 
-      b.classList.add('key-pass'); document.getElementById('cust-arm').style.transform = 'rotate(-30deg)';
-      for(let i=0; i<30; i++) particles.push(new Particle('spark', cw/2, ch/2)); // fake burst
-  }},
-  { t: 5000, f: () => { 
-      b.classList.add('headlights-on'); flasher('flash1');
-      cust.style.transform = 'translate(450px, 100px) translateZ(80px)'; // walk to car
-  }},
-  { t: 7800, f: () => { b.classList.add('door-open'); } },
-  { t: 8100, f: () => { cust.style.opacity = '0'; cust.style.transform += ' scale(0)'; document.getElementById('status-line').innerHTML = '<span>🛡</span> Status : Customer Seated ✓'; } },
-  { t: 8500, f: () => { 
-      b.classList.remove('door-open', 'walking'); b.classList.add('engine-on', 'dash-on');
-      flasher('flash2'); eqInterval = setInterval(eqAnimate, 100);
-      car.style.animation = 'engineShake 0.08s infinite';
-  }},
-  { t: 10500, f: () => { 
-      b.classList.add('headlights-max', 'move-road');
-      b.style.setProperty('--wheel-speed', '0.05s'); b.classList.add('wheel-spin');
-      car.style.animation = 'none'; car.style.transition = 'transform 0.8s ease-in';
-      car.style.transform = 'translate(200px, 0px) translateZ(50px)';
-      fireActive = true; flasher('flash3');
-  }},
-  { t: 11000, f: () => { b.classList.add('speed-lines'); } },
-  { t: 14000, f: () => { 
-      b.style.setProperty('--wheel-speed', '0.04s');
-      fireActive = false; pMultiplier = 2.5; updateSpeed(240, '3s');
-      b.classList.add('show-side');
-  }},
-  { t: 18000, f: () => { 
-      car.style.transition = 'transform 0.15s ease-out';
-      car.style.transform = 'translate(200px, -30px) translateZ(50px) rotateX(3deg)';
-      frontStrike = true; setTimeout(()=>frontStrike=false, 200);
-      particles.push(new Particle('shockwave', cw/2+140, ch/2+200));
-  }},
-  { t: 18150, f: () => { 
-      car.style.transition = 'transform 0.3s ease-in-out';
-      car.style.transform = 'translate(200px, 5px) translateZ(50px)';
-  }},
-  { t: 20000, f: () => { 
-      car.style.transition = 'transform 2s ease-in-out';
-      car.style.transform = 'translate(200px, 0px) translateZ(50px) rotateY(8deg)';
-      fireActive = true; smokeThick = true; 
-  }},
-  { t: 22000, f: () => { car.style.transform = 'translate(200px, 0px) translateZ(50px) rotateY(-8deg)'; } },
-  { t: 23000, f: () => { 
-      b.classList.add('brake', 'wheel-lock'); b.classList.remove('wheel-spin');
-      car.style.transition = 'transform 1.2s cubic-bezier(0.8,0,1,1)';
-      car.style.transform = 'translate(50px, 0px) translateZ(50px) rotateX(-4deg)';
-      fireActive = false; updateSpeed(0, '1.2s');
-  }},
-  { t: 25000, f: () => { 
-      b.classList.add('flare'); flasher('flash4');
-      car.style.transition = 'transform 0.6s cubic-bezier(0.34,1.56,0.64,1)';
-      car.style.transform = 'translate(50px, -80px) translateZ(50px) rotateX(-30deg)';
-      fireActive = true; wheelieActive = true; particles.push(new Particle('shockwave', cw/2, ch/2+200));
-      document.querySelector('.scene-container').style.perspective = '1200px';
-  }},
-  { t: 26200, f: () => { 
-      car.style.transition = 'transform 1s cubic-bezier(0.34,1.56,0.64,1)';
-      car.style.transform = 'translate(50px, 0px) translateZ(50px) rotateX(0deg)';
-      b.classList.remove('flare'); particles.push(new Particle('shockwave', cw/2+100, ch/2+200));
-  }},
-  { t: 28000, f: () => { 
-      wheelieActive = false; fireActive = false; smokeThick = false;
-      b.classList.remove('brake', 'wheel-lock', 'speed-lines', 'move-road', 'show-side');
-      b.classList.add('wheel-spin'); b.style.setProperty('--wheel-speed', '2s');
-      car.style.transition = 'transform 2s ease-in-out';
-      car.style.transform = 'translate(0px, 0px) translateZ(50px) rotateX(0deg)';
-      pMultiplier = 1;
-  }},
-  { t: 30000, f: () => { b.classList.remove('intro'); } },
-  { t: 31000, f: () => { 
-      b.className = ''; car.style.transition='none'; car.style.transform='translateZ(50px)';
-      cust.style.transition='none'; cust.style.transform='translateZ(30px)'; cust.style.opacity=1;
-      document.getElementById('cust-arm').style.transform='rotate(0deg)';
-      document.getElementById('status-line').innerHTML = '<span>🛡</span> Status : Awaiting Driver';
-      clearInterval(eqInterval); runSequence(); 
-  }}
-];
-
-function runSequence() {
-  phases.forEach(p => setTimeout(p.f, p.t));
-}
-runSequence();
 </script>
 </body>
 </html>

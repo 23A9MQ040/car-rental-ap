@@ -10,7 +10,7 @@
 <body>
 <nav class="navbar">
   <div class="nav-inner">
-    <a href="home.html" class="nav-logo">
+    <a href="index.html" class="nav-logo">
       <div class="logo-icon">🚗</div>
       <div class="logo-text">AP <span>Cars</span></div>
     </a>
@@ -55,10 +55,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   if (localStorage.getItem('carRentalToken')) {
-     const user = JSON.parse(localStorage.getItem('carRentalUser') || '{}');
-     if (user.role === 'ADMIN') window.location.href = 'admin-dashboard.html';
-     else if (user.role === 'OWNER') window.location.href = 'owner-dashboard.html';
-     else window.location.href = 'user-dashboard.html';
+    window.location.href = 'user-dashboard.html';
   }
 });
 
@@ -79,9 +76,7 @@ async function handleLogin(e) {
     localStorage.setItem('carRentalUser', JSON.stringify({ id: data.userId, name: data.name, email: data.email, role: data.role }));
     showToast('✅ Login successful! Welcome back, ' + data.name, 'success');
     setTimeout(() => {
-      if (data.role === 'ADMIN') window.location.href = 'admin-dashboard.html';
-      else if (data.role === 'OWNER') window.location.href = 'owner-dashboard.html';
-      else window.location.href = 'user-dashboard.html';
+      window.location.href = data.role === 'ADMIN' ? 'admin-dashboard.html' : 'user-dashboard.html';
     }, 800);
   } catch (err) {
     errorMsg.style.display = 'block';
