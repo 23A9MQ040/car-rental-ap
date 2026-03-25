@@ -18,6 +18,7 @@ com\apcars\security\UserDetailsServiceImpl.class
 com\apcars\Application.class
 com\apcars\controller\PaymentController$PaymentRequest.class
 com\apcars\controller\AuthController$JwtResponse.class
+com\apcars\exception\GlobalExceptionHandler.class
 com\apcars\security\JwtUtils.class
 com\apcars\model\Booking.class
 com\apcars\repository\BookingRepository.class

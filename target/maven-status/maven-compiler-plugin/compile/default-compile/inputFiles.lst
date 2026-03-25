@@ -12,6 +12,7 @@ D:\car_rental_system\src\main\java\com\apcars\security\UserDetailsServiceImpl.ja
 D:\car_rental_system\src\main\java\com\apcars\security\JwtUtils.java
 D:\car_rental_system\src\main\java\com\apcars\service\PaymentService.java
 D:\car_rental_system\src\main\java\com\apcars\controller\PaymentController.java
+D:\car_rental_system\src\main\java\com\apcars\exception\GlobalExceptionHandler.java
 D:\car_rental_system\src\main\java\com\apcars\repository\PaymentRepository.java
 D:\car_rental_system\src\main\java\com\apcars\repository\BookingRepository.java
 D:\car_rental_system\src\main\java\com\apcars\config\DatabaseSeeder.java

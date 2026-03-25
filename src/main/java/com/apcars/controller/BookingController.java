@@ -15,6 +15,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
@@ -32,17 +35,22 @@ public class BookingController {
     @Data
     @NoArgsConstructor
     public static class BookingRequest {
+        @NotNull(message = "Car ID is required")
         private Long carId;
+        @NotBlank(message = "Pickup City is required")
         private String pickupCity;
+        @NotBlank(message = "Drop City is required")
         private String dropCity;
+        @NotBlank(message = "Pickup Date is required")
         private String pickupDate;
+        @NotBlank(message = "Return Date is required")
         private String returnDate;
         private String specialRequests;
     }
 
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     @PostMapping
-    public ResponseEntity<?> createBooking(@RequestBody BookingRequest req, Authentication auth) {
+    public ResponseEntity<?> createBooking(@Valid @RequestBody BookingRequest req, Authentication auth) {
         UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
         User user = userRepository.findById(userDetails.getId()).orElse(null);
         Car car = carRepository.findById(req.getCarId()).orElse(null);

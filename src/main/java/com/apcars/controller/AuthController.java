@@ -16,6 +16,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotBlank;
 import java.util.Collections;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -32,15 +35,21 @@ public class AuthController {
     @Data
     @NoArgsConstructor
     public static class LoginRequest {
+        @NotBlank(message = "Email is required")
         private String email;
+        @NotBlank(message = "Password is required")
         private String password;
     }
 
     @Data
     @NoArgsConstructor
     public static class SignupRequest {
+        @NotBlank(message = "Name is required")
         private String name;
+        @NotBlank(message = "Email is required")
+        @Email(message = "Email must be valid")
         private String email;
+        @NotBlank(message = "Password is required")
         private String password;
         private String phone;
         private String city;
@@ -59,7 +68,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
 
@@ -74,7 +83,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@RequestBody SignupRequest signUpRequest) {
+    public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
         if (userRepository.existsByEmail(signUpRequest.getEmail())) {
             return ResponseEntity.badRequest().body(Collections.singletonMap("message", "Error: Email is already in use!"));
         }
